@@ -1,0 +1,26 @@
+#NODEFILE 
+nodes.dat
+#ELEMFILE 
+elements.dat
+#FIBERFILE
+fibre.dat
+#MATERIALFILE
+file_material.dat
+#POTENFILE 
+!n_cores
+!ecg_prc_n_core.bin
+#POSTFILENAME
+!NAME
+#FILETYPE
+!1         {1 Ens, 2 VTK}
+#POTENTIAL
+1 1 {f1, freq data is saved} {f2, freq data is postproc.}{f2>=f1} 
+!#ISOCHRONE
+!50
+!0.0  399.0
+!#APD
+!50
+!0.0  399.0
+!#ECGPOINT 
+!#PRINT_ECG_MATRIX
+#END

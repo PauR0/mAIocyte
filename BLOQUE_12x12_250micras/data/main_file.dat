@@ -1,0 +1,89 @@
+#TITLE
+Bloque3D
+!-------------------------------------------------------------------------------
+#ANALISYSTYPE
+1
+!-------------------------------------------------------------------------------
+#MATERIAL, FILE:"file_material.dat"  !Conductividades normalizadas (S/(cm*pF))
+!-------------------------------------------------------------------------------
+#PROP_NOD  !Modelo electrico
+6
+1 1 1 0 1 !TT ENDO SANO
+2 1 1 0 2  !TT MID SANO
+3 1 1 0 3 !TT EPI SANO
+4 2 1 0 51  !TT ENDO BZ
+5 2 1 0 52  !TT MID BZ
+6 2 1 0 53  !TT EPI BZ
+!-------------------------------------------------------------------------------
+#PROP_ELEM, FILE:"fibre.dat"  !Direccion de fibras
+!-------------------------------------------------------------------------------
+#NODES, FILE:"nodes.dat"
+!-------------------------------------------------------------------------------
+#ELEMENTS, FILE:"elements.dat"
+!-------------------------------------------------------------------------------
+!----------------------------- PARAMETROS DEL ANALISIS - PROTOCOLO DE ESTIMULO -
+#STEP
+!-------------------------------------------------------------------------------
+! Dependiendo del valor del parametro RESTART, se genera un archivo binario con
+! los datos necesarios para seguir la simulacion de ese punto. Se guardan los
+! potenciales y las variables del modelo electrico en ese punto. Este parametro
+! tiene los cuatro siguiente posibilidades de configuracion:
+! ------------------------------------------------------------------------------
+*RESTART, -1
+! No escribe archivo de restart
+! ------------------------------------------------------------------------------
+!*RESTART, 0, FILE_R: "rstrt_25000_"
+! Lee el archivo de restart, cuyo nombre raiz es "rstrt_25000_", le agrega el
+! nro de proceso y la extension bin. Por ejemplo, para el proceso 8, seria el
+! archivo  rstrt_25000_8.bin
+! ------------------------------------------------------------------------------
+!*RESTART, 1, FILE_W:"rstrt_Ctrl_INaK_BCL500ms"
+!1 500000
+! Escribe archivo de restart, puede generar "n" archivos. En este caso genera 2
+! archivos en los pasos 5000 y 25000, con el nombre raiz "rstrt_"
+! ------------------------------------------------------------------------------
+!*RESTART, 2, FILE_R:"rstrt__250000_prc_", FILE_W:"rstrt02_"
+!1 250000
+! Lee  y escribe archivos de restart. Lo que esta indicado con FILE_R y FILE_W
+! son los nombres de la raiz de los archivos a leer y a escribir. En este caso
+! lee el archivo cuyo nombre raiz es rstrt_5000_ y generara 2 archivos en los
+! pasos 1500 y 5000 respectivamente
+! -------------------------------------------------------------------------------
+!*RESTART, 3, FILE_W:"rstrt_"
+! 5000
+! Escribe archivo de restart cada n iteraciones, en este caso, cada 5000 iter.
+! -------------------------------------------------------------------------------
+!*RESTART, 4, FILE_R:"rstrt_5000_", FILE_W:"rstrt02_"
+! 12500
+! Lee el archivo de restart, cuyo nombre raiz es "rstrt_5000_", y escribe un
+! archivo de restart cada n iteraciones, en este caso, cada 12500 iter
+!-------------------------------------------------------------------------------
+!*PARAM_NODE, FILE: " "   ! Heterogeneidad segun modelo de Courtemanche incluida en modelos
+!-------------------------------------------------------------------------------
+!*PARAM_ELEM
+!-------------------------------------------------------------------------------
+!-------ESQUEMA DE INTEGRACION TEMPORAL -- 2=IMPLICITA SIN OPTIMIZACION TEMPORAL
+*INTEG_SCH
+3
+!-------TIPO DE SOLVER A UTILIZAR CON LAS PSBLAS 1= GRADIENTE CONJUGADO---------
+*SOLVER
+1
+!-------MAXIMO DE ITERACIONES, TIEMPO MAXIMO DE SIMULACION -----------------
+!-deltaT-MinIncr Temporal-Tiempo Maximo en segundos-MáxIncrTemporal- Nro de Incrementos para problemas No lineales NUMERO
+*TIME_INC
+0.02 0.02 1522900.0 0.02 1        ! 201ms
+!-------------------------------------------------------------------------------
+*STIMULUS, FILE:"file_stimulus.dat"     ! Ajustado a la malla voxelizada
+!-------------------------------------------------------------------------------
+*NODEOUTPUT, FILE:"file_nodeoutput.dat"    ! Salida en ciertos nodos
+!-------------------------------------------------------------------------------
+!*ELEMOUTPUT
+!-----------Aqui en G_OUTPUT  se define la variable (Potencial a la frecuencia indicada) para el electrograma
+!--------------------------------------------------------------------
+*G_OUTPUT
+1
+2 50
+!-------------------------------------------------------------------------------
+#ENDSTEP
+#ENDPROBLEM
+!-------------------------------------------------------------------------------
