@@ -1,6 +1,8 @@
 
 import os
 
+import json
+
 import argparse
 
 import numpy as np
@@ -662,7 +664,7 @@ class SensElvExp:
         node = self.nodes[node_id]
 
 
-        save_dir = self.path+'/seg_signals'
+        save_dir = self.path+'/seg_stimuli'
         if not os.path.exists(save_dir):
             os.mkdir(save_dir)
 
@@ -674,25 +676,28 @@ class SensElvExp:
         curr_files=os.listdir(save_dir)
         while not end:
 
-            prefix = f"{self.s1}_{s2}_{self.cell_type}_{node_id}"
-
-            go = True
-            if not w:
-                for f in curr_files:
-                    if fnmatch(f, f"{prefix}*.npy") and go:
-                        print(f"WARNING: {f} already already exists, {prefix} files wont be written....")
-                        go=False
-
             ps2 = np.argmax(node.peaks['min'][0][(node.peaks['min'][0] < t_end)]).astype(int) #previous minpeak to t_end, this is expected to be S2
-            if go:
-                max_ders = []
-                apd90s = []
+            fname = f"{save_dir}/{self.s1}_{s2}_{self.cell_type}_{node_id}.json"
+
+            if os.path.exists(fname) and not w:
+                print(f"WARNING: {fname} already already exists, nothing will be written....")
+            else:
                 poi, _ = self.get_stimuli_of_interest(node_id, t_ini=t_ini, t_end=t_end, s2=s2, show=self.debug)
                 if poi is not None:
-                    np.save(f"{save_dir}/{prefix}_AP.npy", node.AP[poi[0]:poi[1]])
-                    np.save(f"{save_dir}/{prefix}_AP_1.npy", node.AP[poi[1]:poi[2]])
-                    np.save(f"{save_dir}/{prefix}_t_act.npy", node.time[poi[1]] - node.time[poi[0]])
-                    np.save(f"{save_dir}/{prefix}_t_delta.npy", node.time[1] - node.time[0])
+                    # Data to be written
+                    data={
+                        "AP" : node.AP[poi[0]:poi[1]].tolist(),
+                        "AP+1" : node.AP[poi[1]:poi[2]].tolist(),
+                        "t_act" : node.time[poi[1]] - node.time[poi[0]],
+                        "t_delta" : node.time[1] - node.time[0],
+                        "node_id" : node_id,
+                        "S1" : self.s1,
+                        "S2" : s2,
+                        "cell_type" : self.cell_type
+                    }
+
+                    with open(fname, "w") as outfile:
+                        json.dump(data, outfile, indent=4)
 
             s2 -= self.s2_step
             if ps2 < len(node.peaks['min'][0])-1:
