@@ -4,16 +4,21 @@ Bloque3D
 #ANALISYSTYPE
 1
 !-------------------------------------------------------------------------------
-#MATERIAL, FILE:"file_material.dat"  !Conductividades normalizadas (S/(cm*pF))
+#MATERIAL  !Conductividades normalizadas (S/(cm*pF))
+3
+1 0 0 0 3 0.0016 0.39 1.0    !Healthy tissue
+2 0 0 0 3 0.0050000 0.20 1.0 !BZ
+3 0 0 0 3 0.0 0.0 0.0        !Core Zone
 !-------------------------------------------------------------------------------
 #PROP_NOD  !Modelo electrico
-6
+7
 1 1 1 0 1 !TT ENDO SANO
 2 1 1 0 2  !TT MID SANO
 3 1 1 0 3 !TT EPI SANO
 4 2 1 0 51  !TT ENDO BZ
 5 2 1 0 52  !TT MID BZ
 6 2 1 0 53  !TT EPI BZ
+7 3 1 0 18  !McCanell Fibroblast
 !-------------------------------------------------------------------------------
 #PROP_ELEM, FILE:"fibre.dat"  !Direccion de fibras
 !-------------------------------------------------------------------------------
