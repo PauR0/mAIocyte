@@ -101,7 +101,7 @@ def make_output_dir(path, s1, s2_step, w=False):
     dname = f"{path}/output_{s1}_{s2_step}"
 
     if os.path.exists(dname) and not w:
-        print("ERROR: directory {dname} already exists and overwritting is set to false....")
+        print(f"ERROR: directory {dname} already exists and overwritting is set to false....")
         return False
     elif os.path.exists(dname):
         rmtree(dname)
