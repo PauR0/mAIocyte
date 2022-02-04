@@ -1,6 +1,6 @@
 #!bin/python3
 
-import os
+import os, sys
 
 import re
 
@@ -13,8 +13,10 @@ from distutils.dir_util import copy_tree
 from shutil import rmtree
 
 
-
-TEMP_PATH = './BLOQUE_12x12_250micras'
+FILE_DIR = sys.path[0]
+if not FILE_DIR:
+    FILE_DIR='.'
+TEMP_PATH = FILE_DIR+'/BLOQUE_12x12_250micras'
 
 def make_stimulus_file(path,
                        s1,
@@ -215,7 +217,7 @@ def make_case(path,
 
     main_file_fname = make_main_file(path, s1, s2_step, stimulus_fname, t_max)
 
-    exec_command = f"./runelvBZ.sh {n_cores} {main_file_fname} {output_dname}/ {output_dname}/log &"
+    exec_command = FILE_DIR + f"/runelvBZ.sh {n_cores} {main_file_fname} {output_dname}/ {output_dname}/log &"
     if run:
         if os.path.exists("endelv.dat"):
             os.remove("endelv.dat")
@@ -226,7 +228,7 @@ def make_case(path,
             sleep(30)#Sleep 30 seconds
         os.remove("endelv.dat")
         post_config_fname = make_run_post_config_file(path, n_cores, s1, s2_step)
-        exec_command = f"./runpost.sh {post_config_fname} {output_dname} &"
+        exec_command = FILE_DIR + f"/runpost.sh {post_config_fname} {output_dname} &"
         os.system(exec_command)
 
 
