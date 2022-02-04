@@ -324,5 +324,8 @@ if __name__ == '__main__':
         else:
             TEMP_PATH = args.temp_path
 
+    if args.path is None:
+        print("ERROR: Wrong path given ....")
+        exit()
 
     make_case(path=args.path, s1=args.s1, s2_step=args.s2_step, myo=args.myo, in_path=args.in_path, bz=args.bz, run=args.r, run_post=args.o, n_cores=args.nc, w=args.w)
