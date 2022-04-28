@@ -1,6 +1,6 @@
 #!bin/python3
 
-import os
+import os, sys
 
 import re
 
@@ -13,8 +13,10 @@ from distutils.dir_util import copy_tree
 from shutil import rmtree
 
 
-
-TEMP_PATH = './BLOQUE_12x12_250micras'
+FILE_DIR = sys.path[0]
+if not FILE_DIR:
+    FILE_DIR='.'
+TEMP_PATH = FILE_DIR+'/BLOQUE_12x12_250micras'
 
 def make_stimulus_file(path,
                        s1,
@@ -101,7 +103,7 @@ def make_output_dir(path, s1, s2_step, w=False):
     dname = f"{path}/output_{s1}_{s2_step}"
 
     if os.path.exists(dname) and not w:
-        print("ERROR: directory {dname} already exists and overwritting is set to false....")
+        print(f"ERROR: directory {dname} already exists and overwritting is set to false....")
         return False
     elif os.path.exists(dname):
         rmtree(dname)
@@ -215,7 +217,7 @@ def make_case(path,
 
     main_file_fname = make_main_file(path, s1, s2_step, stimulus_fname, t_max)
 
-    exec_command = f"./runelvBZ.sh {n_cores} {main_file_fname} {output_dname}/ {output_dname}/log &"
+    exec_command = FILE_DIR + f"/runelvBZ.sh {n_cores} {main_file_fname} {output_dname}/ {output_dname}/log &"
     if run:
         if os.path.exists("endelv.dat"):
             os.remove("endelv.dat")
@@ -226,7 +228,7 @@ def make_case(path,
             sleep(30)#Sleep 30 seconds
         os.remove("endelv.dat")
         post_config_fname = make_run_post_config_file(path, n_cores, s1, s2_step)
-        exec_command = f"./runpost.sh {post_config_fname} {output_dname} &"
+        exec_command = FILE_DIR + f"/runpost.sh {post_config_fname} {output_dname} &"
         os.system(exec_command)
 
 
@@ -324,5 +326,8 @@ if __name__ == '__main__':
         else:
             TEMP_PATH = args.temp_path
 
+    if args.path is None:
+        print("ERROR: Wrong path given ....")
+        exit()
 
     make_case(path=args.path, s1=args.s1, s2_step=args.s2_step, myo=args.myo, in_path=args.in_path, bz=args.bz, run=args.r, run_post=args.o, n_cores=args.nc, w=args.w)
