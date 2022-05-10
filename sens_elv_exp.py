@@ -517,6 +517,39 @@ class SensElvExp:
                             'cell_type' : self.cell_type,
                             'node_id'   : node_id })
 
+                if self.debug:
+                        md_i0 = np.argwhere(node.time == max_ders[0])[0,0]
+                        apd_i0 = np.argwhere(node.time == apd90s[0])[0,0]
+                        apd0_i0 = poi[0] + np.argmin(np.abs(node.AP[poi[0]:apd_i0-20] - node.AP[apd_i0]))
+
+
+                        md_i1 = np.argwhere(node.time == md_t)[0,0]
+                        apd_i1 = np.argwhere(node.time == apd90_t)[0,0]
+                        apd0_i1 = poi[1] + np.argmin(np.abs(node.AP[poi[1]:apd_i1-20] - node.AP[apd_i1]))
+
+
+                        plt.rcParams.update({'font.size': 18})
+                        fig = plt.figure()
+                        fig.suptitle(f'{self.cell_type} S1 {self.s1} S2 {s2}')
+
+                        ax1 = fig.add_subplot(1, 1, 1)
+                        ax1.plot(node.time[poi[0]:poi[-1]], node.AP[poi[0]:poi[-1]], 'k', linestyle='-', label='AP')
+                        ymin, ymax = ax1.get_ylim()
+
+                        ax1.axvspan(node.time[md_i0], node.time[apd_i0], facecolor='b', alpha=0.3, label="APD-1")
+                        ax1.plot([node.time[apd0_i0], node.time[apd_i0]], [node.AP[apd_i0]]*2, '--', color='gray', label="APD-1")
+                        ax1.text(np.mean([node.time[apd0_i0]-50, node.time[apd_i0]]), node.AP[apd_i0]+5, 'APD$_{t-1}$', fontdict={"usetex": True, 'size': 18} )
+
+                        ax1.axvspan(node.time[apd_i0], node.time[md_i1], facecolor='g', alpha=0.3, label="DI")
+                        ax1.plot([node.time[apd_i0], node.time[md_i1]], [min(node.AP[apd_i0], node.AP[md_i1])]*2, '--', color='gray', label="DI")
+                        ax1.text(np.mean([node.time[apd_i0], node.time[md_i1]])-10, min(node.AP[apd_i0], node.AP[md_i1])+5, 'DI', fontdict={"usetex": True,'size': 18} )
+
+                        ax1.axvspan(node.time[md_i1], node.time[apd_i1], facecolor='b', alpha=0.3, label="APD")
+                        ax1.plot([node.time[apd0_i1], node.time[apd_i1]], [node.AP[apd_i1]]*2, color='gray', linestyle='--', label="APD")
+                        ax1.text(np.mean([node.time[apd0_i1], node.time[apd_i1]])-50, node.AP[apd_i1]+5, 'APD', fontdict={"usetex": True,'size': 18} )
+                        #ax1.legend()
+                        plt.show()
+
             s2 -= self.s2_step
             if ps2 < len(node.peaks['min'][0])-1:
                 t_ini = int(node.peaks['min'][0][ps2+1])
