@@ -106,7 +106,7 @@ def griddata(x, y, z, binsize=0.01, retbin=True, retloc=True):
             return grid, wherebin
         else:
             return grid
-
+#
 
 def plot_data(data_df):
 
@@ -129,7 +129,7 @@ def plot_data(data_df):
     plt.title('APD+1')
     plt.colorbar()
     plt.show()
-
+#
 
 def load_dataframes(path, ext='.csv'):
 
