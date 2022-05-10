@@ -457,11 +457,13 @@ class SensElvExp:
             t_end_i = np.argwhere(node.time == t_end)[0,0]
             plt.title(f'{self.cell_type} S1 {self.s1} S2 {s2} at node {node_id}')
             plt.plot(node.time[t_ini_i:t_end_i], node.AP[t_ini_i:t_end_i], 'gray', linestyle='-.')
-            plt.plot(node.time[mpoi_i[0]:mpoi_i[-1]], node.AP[mpoi_i[0]:mpoi_i[-1]])
+            plt.plot(node.time[mpoi_i[0]:mpoi_i[-1]], node.AP[mpoi_i[0]:mpoi_i[-1]], 'k')
             max_peaks_ids = (node.peaks['max'][0] >= t_ini) & (node.peaks['max'][0] < t_end)
             plt.plot(node.peaks['max'][0][max_peaks_ids], node.peaks['max'][1][max_peaks_ids], 'r*')
-            plt.scatter(mpoi_t, node.AP[mpoi_i])
+            plt.plot(mpoi_t, node.AP[mpoi_i], 'c*')
+            plt.axvspan(mpoi_t[0], mpoi_t[-1], color='y', alpha=0.3)
             plt.plot(Mpoi_t, node.AP[Mpoi_i], 'g*')
+            plt.tight_layout()
             plt.show()
 
         if mpoi_t[2]-mpoi_t[1]> self.s1+s2/2:
