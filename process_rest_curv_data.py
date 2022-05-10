@@ -137,12 +137,21 @@ def load_dataframes(path, ext='.csv'):
 
     df_names = [f for f in os.listdir(df_dir) if f.endswith(ext)]
 
+
+    APD_names = [f for f in df_names if f.startswith('APD_DI_APD+1')]
     col_dtypes = {'S1':int, 'S2':int, 'APD':float, 'DI':float , 'APD+1':float, 'cell_type':str, 'node_id':int}
-    dfs = [pd.read_csv(f'{df_dir}/{name}', dtype=col_dtypes) for name in df_names]
+    dfs = [pd.read_csv(f'{df_dir}/{name}', dtype=col_dtypes) for name in APD_names]
+    APD_df = pd.DataFrame(columns=dfs[0].columns)
+    APD_df = APD_df.append(dfs, ignore_index=True)
 
-    DF = pd.DataFrame(columns=dfs[0].columns)
+    col_dtypes = {'S1':int, 'S2':int, 'DI_or':float , 'DI_dest':float, 'CV':float, 'cell_type':str, 'node_or':str, 'node_dest':str}
+    CV_names = [f for f in df_names if f.startswith('DI_CV')]
+    dfs = [pd.read_csv(f'{df_dir}/{name}', dtype=col_dtypes) for name in CV_names]
+    CV_df = pd.DataFrame(columns=dfs[0].columns)
+    CV_df = CV_df.append(dfs, ignore_index=True, )
 
-    return DF.append(dfs, ignore_index=True)
+    return APD_df, CV_df
+#
 
 
 def compute_restitution_curves(path=None, data_df=None):
