@@ -362,7 +362,7 @@ class SensElvExp:
                 self.nodes[i].time = data[:, 0]
                 self.nodes[i].AP   = data[:, 1]
                 self.nodes[i].detect_peaks()
-                self.nodes[i].loc = node_loc[int(i), 2:]
+                self.nodes[i].loc = node_loc[int(i)-1, 2:]
 
         if self.debug:
             p = pv.Plotter()
