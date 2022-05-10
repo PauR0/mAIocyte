@@ -4,12 +4,19 @@ import os
 
 import numpy as np
 
+from scipy.optimize import curve_fit
+
 import pandas as pd
 
 import argparse
 
 import matplotlib.pyplot as plt
-import pyvista as pv
+import seaborn as sns
+
+def exp_(x, a, b, c):
+
+    return a * (1 - b*np.exp(-x/c))
+
 
 def griddata(x, y, z, binsize=0.01, retbin=True, retloc=True):
     """
@@ -153,61 +160,132 @@ def load_dataframes(path, ext='.csv'):
     return APD_df, CV_df
 #
 
+def make_APDRC_file(data, fname, debug=False, w=False):
 
-def compute_restitution_curves(path=None, data_df=None):
+    if os.path.exists(fname) and not w:
+        print(f"Warning {fname} already exists and overwitting option is set to False. Nothing will be saved....")
 
-    if path is None and data_df is not None:
+    #Removing noise just in case .....
+    #data = data.drop(data[(data.DI < 17) & (data['APD+1'] > 152)].index)
+    #data = data.drop(data[(data.DI < 25) & (data['APD+1'] > 150)].index)
+    #data = data.drop(data[data.DI < 10].index)
+    data_df = data[['DI','APD+1']].drop_duplicates(subset='DI', keep="last")
+    data_df = data_df[['DI','APD+1']].sort_values('DI')
+
+    x = data_df['DI'].to_numpy()
+    y = data_df['APD+1'].to_numpy()
+
+
+    #p0 iteration was neded in some cases to converge, however it may a local minimum :|
+    abc, _ = curve_fit(exp_, x, y, p0=[389.02417036, 0.5086576, 112.45328555])
+    xx = np.linspace(min(5, x.min()), max(x.max(), 700), 200)
+
+    if debug:
+        print("a b c: ", abc )
+        plt.plot(x, y, 'bo')
+        plt.plot(xx, exp_(xx, *abc), 'k-')
+        plt.show()
+
+
+    save_arr = np.array((xx, exp_(xx, *abc))).T.astype(str)
+    np.savetxt(fname, save_arr, fmt="""\"%s\"""", delimiter=',')
+#
+
+def make_CVRC_file(data, fname, debug=False, s=10, w=False):
+
+    if os.path.exists(fname) and not w:
+        print(f"Warning {fname} already exists and overwitting option is set to False. Nothing will be saved....")
+        return False
+
+    data['DI'] = data[['DI_or', 'DI_dest']].mean(axis=1)
+    data = data.drop(data[(data.DI < 27) & (data['CV'] > 0.04)].index)
+    data = data.drop(data[data.CV < 0].index)
+    data = data.drop(data[(data.DI < 30) & (data['CV'] > 0.045)].index)
+    data_df = data.drop_duplicates(subset='DI', keep="last")
+    data_df = data_df.sort_values('DI')
+
+    x = data_df['DI'].to_numpy()
+    y = data_df['CV'].to_numpy()
+
+    #p0 iteration was neded in some cases to converge, however it may a local minimum :|
+    abc, _ = curve_fit(exp_, x, y, p0=[ 0.07130694, 0.91347783, 52.24539094])
+    xx = np.linspace(min(5, x.min()), max(x.max(), 700), 200)
+
+    if debug:
+        print("a b c: ", abc )
+        fig, ax = plt.subplots()
+        sns.scatterplot(x='DI', y='CV', hue='node_dest', style='node_or', data=data_df, ax=ax)
+        ax.plot(xx, exp_(xx, *abc), 'k-')
+        plt.show()
+
+    save_arr = np.array( (xx, exp_(xx, *abc) *s) ).T.astype(str)
+    np.savetxt(fname, save_arr, fmt="""\"%s\"""", delimiter=',')
+#
+
+def compute_restitution_curves(path=None, APD_df=None, CV_df=None, cell_type=None, bz=False, w=False, debug=False):
+
+    if path is None and APD_df is None and CV_df is not None:
         print("ERROR: Either path or data_df must be passed...")
         return
 
     if path:
-        data_df = load_dataframes(path)
+        APD_df, CV_df = load_dataframes(path)
 
-    x = data_df[['APD', 'DI', 'APD+1']].to_numpy()
+    if path is not None and APD_df is not None:
+        b='Sanas'
+        if bz:
+            b='BZ'
+        fname = f"{path}/Rest_Curve_data/RestitutionCurve_{b}_APD_{cell_type}.csv"
+        make_APDRC_file(APD_df, fname, debug=debug, w=w)
 
-    p = pv.Plotter()
-    p.add_mesh(x, scalars = x[:,2])
-    p.add_axes()
-    p.show()
-
-    #plot_data(data_df)
+    if path is not None and CV_df is not None:
+        b='Sanas'
+        s=10
+        if bz:
+            b='BZ'
+            s*=0.25
+        fname = f"{path}/Rest_Curve_data/RestitutionCurve_{b}_CV_{cell_type}.csv"
+        make_CVRC_file(CV_df, fname, debug=debug, s=s, w=w)
 
 
 
 if __name__ == '__main__':
 
-    if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="""Processing S1S2 data for generating restitution curves """,
+                                    usage = """ """)
 
-        parser = argparse.ArgumentParser(description="""Processing S1S2 data for generating restitution curves """,
-                                        usage = """ """)
+    parser.add_argument('-m',
+                        '--myo',
+                        dest='myo',
+                        default='ttendo',
+                        type=str,
+                        help="""Flag to specify if ttepi - ttmid - ttendo. Default ttendo.""")
 
-        parser.add_argument('-m',
-                            '--myo',
-                            dest='myo',
-                            default='ttendo',
-                            type=str,
-                            help="""Flag to specify if ttepi - ttmid - ttendo. Default ttendo.""")
+    parser.add_argument('-b',
+                        '--border-zone',
+                        dest='bz',
+                        action='store_true',
+                        help="""Set the node type to Border Zone.""")
 
-        parser.add_argument('-b',
-                            '--border-zone',
-                            dest='bz',
-                            action='store_true',
-                            help="""Set the node type to Border Zone.""")
+    parser.add_argument('-w',
+                        '--overwrite',
+                        dest='w',
+                        action='store_true',
+                        help=""" Overwrite existing files.""")
 
-        parser.add_argument('-w',
-                            '--overwrite',
-                            dest='w',
-                            action='store_true',
-                            help=""" Overwrite existing files.""")
+    parser.add_argument('-d',
+                        '--debug',
+                        dest='debug',
+                        action='store_true',
+                        help="""Run in debug mode. Which essentialy is showing some plots...""")
 
-        parser.add_argument('path',
-                            action='store',
-                            type=str,
-                            nargs='?',
-                            help="""Path to an existing case of cases.""")
+    parser.add_argument('path',
+                        action='store',
+                        type=str,
+                        nargs='?',
+                        help="""Path to an existing case of cases.""")
 
 
-        args = parser.parse_args()
+    args = parser.parse_args()
 
-        compute_restitution_curves(path=args.path)
-
+    compute_restitution_curves(path=args.path, cell_type=args.myo, bz=args.bz, w=args.w, debug=args.debug)
