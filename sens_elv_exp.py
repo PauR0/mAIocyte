@@ -249,7 +249,7 @@ class SensElvExp:
         self.min_s2 : int = 250
         self.DI_CV_df : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'DI_or', 'DI_dest', 'CV', 'cell_type', 'node_or', 'node_dest'])
         self.APD_DI_df : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'APD', 'DI', 'APD+1', 'cell_type', 'node_id'])
-        self.stimuli_segmented : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'DI', 'AP+1', 't_act', 'AP', 'cell_type', 'node_id'])
+        self.stimuli_segmented : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'DI', 'AP+1', 't_act', 'AP', 'cell_type', 'node_id', "APD", "DI","APD+1"])
     #
 
     #Experiment's path to directory
@@ -731,15 +731,20 @@ class SensElvExp:
             else:
                 poi, _ = self.get_stimuli_of_interest(node_id, t_ini=t_ini, t_end=t_end, s2=s2, show=self.debug)
                 if poi is not None:
+                    md_t0, apd90_t0 = compute_max_der_and_perc_repolarization(node.time[poi[0]:poi[1]], node.AP[poi[0]:poi[1]], perc=0.9, show=self.debug)
+                    md_t1, apd90_t1 = compute_max_der_and_perc_repolarization(node.time[poi[1]:poi[2]], node.AP[poi[1]:poi[2]], perc=0.9, show=self.debug)
                     # Data to be written
                     data={
-                        "AP" : node.AP[poi[0]:poi[1]].tolist(),
-                        "AP+1" : node.AP[poi[1]:poi[2]].tolist(),
-                        "t_act" : node.time[poi[1]] - node.time[poi[0]],
-                        "t_delta" : node.time[1] - node.time[0],
-                        "node_id" : node_id,
-                        "S1" : self.s1,
-                        "S2" : s2,
+                        "AP"        : node.AP[poi[0]:poi[1]].tolist(),
+                        "AP+1"      : node.AP[poi[1]:poi[2]].tolist(),
+                        "APD"       : apd90_t0 - md_t0,
+                        "DI"        : md_t1 - apd90_t0,
+                        "APD+1"     : apd90_t0 - md_t0,
+                        "t_act"     : node.time[poi[1]] - node.time[poi[0]],
+                        "t_delta"   : node.time[1] - node.time[0],
+                        "node_id"   : node_id,
+                        "S1"        : self.s1,
+                        "S2"        : s2,
                         "cell_type" : self.cell_type
                     }
 
