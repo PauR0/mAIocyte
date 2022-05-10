@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import pyvista as pv
 
 
-def compute_max_der_and_perc_repolarization(t, ap, perc=0.9, show=False):
+def compute_max_der_and_perc_repolarization(t, ap, perc=0.9, full_output=False, show=False):
     """Compute the times for the points
             1)With maximum derivative before the peak,
             2)Fulfilling a given percentage of repolarization
@@ -42,6 +42,9 @@ def compute_max_der_and_perc_repolarization(t, ap, perc=0.9, show=False):
         plt.plot(t, ap)
         plt.plot([t_max_der, apdq_t], ap[[max_der, apdq_i]])
         plt.show()
+
+    if full_output:
+        return [t_max_der, ap[max_der]], [apdq_t, ap[apdq_i]]
 
     return t_max_der, apdq_t
 #
