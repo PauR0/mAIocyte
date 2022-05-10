@@ -375,7 +375,7 @@ class SensElvExp:
             p.show()
     #
 
-    def save_nodes_npy(self):
+    def save_nodes_npy(self, rm_var=False):
 
         if not check_attrs(self, ['path', 'output_path', 'nodes'], 'Cant save data'):
             return
@@ -387,6 +387,16 @@ class SensElvExp:
             arr[:, 1] = node.AP
             fname = f'{self.output_path}/node_{name}.npy'
             np.save(fname, arr)
+        if rm_var:
+            self.remove_var_files()
+    #
+
+    def remove_var_files(self):
+
+        var_files = [nf for nf in os.listdir(self.output_path) if nf.startswith('prc') and nf.endswith('.var')]
+        if var_files:
+            for vf in var_files:
+                os.remove(f'{self.output_path}/{vf}')
     #
 
     def get_stimuli_of_interest(self, node_id, t_ini, t_end, s2, show=False):
