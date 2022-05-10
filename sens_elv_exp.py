@@ -598,7 +598,6 @@ class SensElvExp:
                                          'node_or'   : ii,
                                          'node_dest' : jj})
 
-                            #if data[-1]['DI_dest']<23:
                             if self.debug:
                                 print(f"Dist {ii} to  {jj} = {d_ij}")
                                 print(data[-1])
