@@ -1,0 +1,60 @@
+#TITLE
+3D_Block
+!-------------------------------------------------------------------------------
+#ANALISYSTYPE
+1
+!-------------------------------------------------------------------------------
+#MATERIAL, FILE:"materials.dat"  !Conductividades normalizadas (S/(cm*pF))
+!-------------------------------------------------------------------------------
+#PROP_NOD  !Modelo electrico
+8
+1 1 1 0 23 !Coutermanche
+2 8 1 0 1 !TT ENDO SANO
+3 8 1 0 2  !TT MID SANO
+4 8 1 0 3 !TT EPI SANO
+5 9 1 0 51  !TT ENDO BZ
+6 9 1 0 52  !TT MID BZ
+7 9 1 0 53  !TT EPI BZ
+8 2 1 0 18  !McCanell Fibroblast
+!-------------------------------------------------------------------------------
+#PROP_ELEM, FILE:"fibre.dat"  !Direccion de fibras
+!-------------------------------------------------------------------------------
+#NODES, FILE:"nodes.dat"
+!-------------------------------------------------------------------------------
+#ELEMENTS, FILE:"elements.dat"
+!-------------------------------------------------------------------------------
+!----------------------------- PARAMETROS DEL ANALISIS - PROTOCOLO DE ESTIMULO -
+#STEP
+Stimulation protocol 1
+!-------------------------------------------------------------------------------
+!-------ESQUEMA DE INTEGRACION TEMPORAL -- 2=IMPLICITA SIN OPTIMIZACION TEMPORAL
+*INTEG_SCH
+3
+!-------TIPO DE SOLVER A UTILIZAR CON LAS PSBLAS 1= GRADIENTE CONJUGADO---------
+*SOLVER
+1
+!-------MAXIMO DE ITERACIONES, TIEMPO MAXIMO DE SIMULACION -----------------
+!-deltaT-MinIncr Temporal-Tiempo Maximo en segundos-MaxIncrTemporal- Nro de Incrementos para problemas No lineales NUMERO
+*TIME_INC
+0.01 0.01 TMAX 0.01 1       !This works fine with Courtemanche
+!!!!!!!!!0.02 0.02 TMAX 0.02 1       !This works fine with TenTusscher
+!-------------------------------------------------------------------------------
+*STIMULUS, FILE:"file_stimulus.dat"     ! Ajustado a la malla voxelizada
+!-------------------------------------------------------------------------------
+*NODEOUTPUT, FILE:"file_nodeoutput.dat"    ! Salida en ciertos nodos
+!-------------------------------------------------------------------------------
+!*ELEMOUTPUT
+!-------------------------------------------------------------------------------
+*RESTART, -1
+! Aunque no queramos archivo de restart, es necesario que el valor de restart se
+!   fije a -1!
+! Hay ejemplos sobre como se utilizó la opcion RESTART en BLOQUE_12x12_250micras/data/main_file.dat
+!--------------------------------------------------------------------
+!-----------Aqui en G_OUTPUT  se define la variable (Potencial a la frecuencia indicada) para el electrograma
+!-----------frecuencia en funcion del deltaT usado en MAXIMO DE ITERACIONES.
+*G_OUTPUT
+1
+2 50
+!-------------------------------------------------------------------------------
+#ENDSTEP
+#ENDPROBLEM
