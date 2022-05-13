@@ -2,13 +2,13 @@
 
 import os
 
+import argparse
+
 import numpy as np
 
 from scipy.optimize import curve_fit
 
 import pandas as pd
-
-import argparse
 
 import matplotlib.pyplot as plt
 import seaborn as sns
