@@ -391,7 +391,7 @@ if __name__ == '__main__':
 
     if args.path is None:
         print("ERROR: Wrong path given ....")
-        exit()
+        sys.exit()
 
     make_case(path=args.path,
               s1=args.s1,
