@@ -122,7 +122,7 @@ def make_output_dir(path, s1, s2_step, w=False):
 
     return dname
 
-def make_main_file(path, s1, s2_step, sti_fname, t_max):
+def make_main_file(path, s1, s2_step, sti_fname, t_max, dt):
 
 
     main_fname = f'{path}/data/main_{s1}_{s2_step}.dat'
@@ -142,11 +142,11 @@ def make_main_file(path, s1, s2_step, sti_fname, t_max):
 
             if '*TIME_INC' in line:
                 edit_next = True
-                new_line = f'0.02 0.02 {t_max:.2f} 0.02 0\n'
+                new_line = f'{dt} {dt} {t_max:.2f} {dt} 1\n'#dt valid for Coutermanche case
 
             if '#TITLE' in line:
                 edit_next = True
-                new_line = f'Bloque3D_{s1}_{s2_step}\n'
+                new_line = f'Slab3D_{s1}_{s2_step}\n'
 
             if '*STIMULUS' in line:
                 line = f'*STIMULUS, FILE:"{sti_fname}"\n'
@@ -201,6 +201,7 @@ def make_case(path,
               train_offset=0,
               current=100.0,
               myo=None,
+              dt=None,
               in_path=False,
               bz=False,
               run=False,
@@ -239,7 +240,12 @@ def make_case(path,
 
     output_dname = make_output_dir(path, s1, s2_step, w=w)
 
-    main_file_fname = make_main_file(path, s1, s2_step, stimulus_fname, t_max)
+    main_file_fname = make_main_file(path=path,
+                                     s1=s1,
+                                     s2_step=s2_step,
+                                     sti_fname=stimulus_fname,
+                                     t_max=t_max,
+                                     dt=dt)
 
     exec_command = [FILE_DIR + "/runelvBZ.sh", str(n_cores), main_file_fname, f"{output_dname}/", f"{output_dname}/log"]
     if run:
@@ -313,6 +319,14 @@ if __name__ == '__main__':
                         default=9,
                         action='store',
                         help="""Number of S1 stimuli before each S2.""")
+
+    parser.add_argument('-t',
+                        '--dt',
+                        dest='dt',
+                        default='0.02',
+                        type=str,
+                        help="""Time differential - to be chosen appropriately considering
+                        the model used (eg. CM 0.01, tenTusscher 0.02).""")
 
     parser.add_argument('-m',
                         '--myo',
@@ -402,6 +416,7 @@ if __name__ == '__main__':
               train_offset=args.tr_off,
               current=args.current,
               myo=args.myo,
+              dt=args.dt,
               in_path=args.in_path,
               bz=args.bz,
               run=args.r,
