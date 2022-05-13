@@ -352,6 +352,12 @@ if __name__ == '__main__':
                         action='store_true',
                         help=""" Save files in an already existing case.""")
 
+    parser.add_argument('--wait',
+                        dest='wait',
+                        action='store_true',
+                        help=""" Make the python process wait for the simulation
+                        to finish.""")
+
     parser.add_argument('-w',
                         '--overwrite',
                         dest='w',
@@ -399,6 +405,7 @@ if __name__ == '__main__':
               in_path=args.in_path,
               bz=args.bz,
               run=args.r,
+              wait=args.wait,
               run_post=args.o,
               n_cores=args.nc,
               w=args.w)
