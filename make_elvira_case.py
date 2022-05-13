@@ -12,6 +12,8 @@ from distutils.dir_util import copy_tree
 
 from shutil import rmtree
 
+from utils import check_s2_params
+
 
 FILE_DIR = sys.path[0]
 if not FILE_DIR:
@@ -20,11 +22,13 @@ TEMP_PATH = FILE_DIR+'/BLOQUE_12x12_250micras'
 
 def make_stimulus_file(path,
                        s1,
-                       s2_step,
+                       s2_ini=None,
+                       s2_end=250,
+                       s2_step=20,
                        s1_per_s2=9,
+                       train_offset=0,
                        st_duration=2.0,
                        current=100.0,
-                       min_s2=250,
                        abs_path=False,
                        w=False):
 
@@ -34,11 +38,16 @@ def make_stimulus_file(path,
         print(f"ERROR: file {fname} already exists and overwite is set to false...")
         return False, False
 
+    if s2_ini is None:
+        s2_ini = s1
+
+    s2_step, cond = check_s2_params(s2_ini=s2_ini, s2_end=s2_end, s2_step=s2_step)
+
     t = 0.0
     stim_line = f""
     n_stim = 0
-    s2 = s1 - s2_step
-    while s2 > min_s2:
+    s2 = s2_ini
+    while cond(s2):
         for i in range(s1_per_s2):
             stim_line += f"{t} {st_duration} {current} "
             if i == s1_per_s2-1:
@@ -48,9 +57,9 @@ def make_stimulus_file(path,
             n_stim += 1
 
         stim_line += f" {t} {st_duration} {current} "
-        t += s1
+        t += s1 + train_offset
         n_stim+=1
-        s2-=s2_step
+        s2 +=s2_step
 
     stim_line = f"1\t {n_stim} " + stim_line + '\n'
 
@@ -66,6 +75,7 @@ def make_stimulus_file(path,
             f_stim.write(l)
 
     return os.path.split(fname)[1], t
+#
 
 def make_node_file(path, myo, bz, w=False):
 
@@ -184,7 +194,12 @@ def make_run_post_config_file(path, ncores, s1, s2_step, ftype=1):
 
 def make_case(path,
               s1,
-              s2_step=None,
+              s2_ini=None,
+              s2_end=250,
+              s2_step=-20,
+              s1_per_s2=9,
+              train_offset=0,
+              current=100.0,
               myo=None,
               in_path=False,
               bz=False,
@@ -208,9 +223,17 @@ def make_case(path,
                 os.remove(path+f)
             w = True
 
-    stimulus_fname, t_max = make_stimulus_file(path, s1=s1, s2_step=s2_step,
-                                        s1_per_s2 = 9, st_duration=2.0,
-                                        current=1000, min_s2 = 250, w=w)
+    stimulus_fname, t_max = make_stimulus_file(path=path,
+                                               s1=s1,
+                                               s2_ini=s2_ini,
+                                               s2_end=s2_end,
+                                               s2_step=s2_step,
+                                               s1_per_s2=s1_per_s2,
+                                               train_offset=train_offset,
+                                               st_duration=2,
+                                               current=current,
+                                               w=w)
+
     if (myo is not None or bz) and not in_path:
         make_node_file(path, myo, bz, w=w)
 
@@ -254,6 +277,42 @@ if __name__ == '__main__':
                         type=int,
                         help="""Lapse of time between the 10th S1 and the S2 stimuli
                         expressed in ms.""")
+
+    parser.add_argument('--s2-end',
+                        dest='s2_end',
+                        default=250,
+                        action='store',
+                        type=float,
+                        help="""Last reached value of S2.""")
+
+    parser.add_argument('--s2-ini',
+                        dest='s2_ini',
+                        type=float,
+                        default=None,
+                        action='store',
+                        help="""Initial S2 for the stimuli train.""")
+
+    parser.add_argument('--tr-off',
+                        dest='tr_off',
+                        type=float,
+                        default=0,
+                        action='store',
+                        help="""An extra offset time at the end of each stimuli train.""")
+
+    parser.add_argument('-c',
+                        '--current',
+                        dest='current',
+                        type=int,
+                        default=100,
+                        action='store',
+                        help="""Current amplitude of the stimulus.""")
+
+    parser.add_argument('--s1-per-s2',
+                        dest='s1_per_s2',
+                        type=int,
+                        default=9,
+                        action='store',
+                        help="""Number of S1 stimuli before each S2.""")
 
     parser.add_argument('-m',
                         '--myo',
@@ -328,4 +387,18 @@ if __name__ == '__main__':
         print("ERROR: Wrong path given ....")
         exit()
 
-    make_case(path=args.path, s1=args.s1, s2_step=args.s2_step, myo=args.myo, in_path=args.in_path, bz=args.bz, run=args.r, run_post=args.o, n_cores=args.nc, w=args.w)
+    make_case(path=args.path,
+              s1=args.s1,
+              s2_ini=args.s2_ini,
+              s2_end=args.s2_end,
+              s2_step=args.s2_step,
+              s1_per_s2=args.s1_per_s2,
+              train_offset=args.tr_off,
+              current=args.current,
+              myo=args.myo,
+              in_path=args.in_path,
+              bz=args.bz,
+              run=args.r,
+              run_post=args.o,
+              n_cores=args.nc,
+              w=args.w)
