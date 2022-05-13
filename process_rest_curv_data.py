@@ -160,7 +160,7 @@ def load_dataframes(path, ext='.csv'):
     return APD_df, CV_df
 #
 
-def make_APDRC_file(data, fname, debug=False, w=False):
+def make_APDR_curve(data, fname=None, debug=False, w=False):
 
     if os.path.exists(fname) and not w:
         print(f"Warning {fname} already exists and overwitting option is set to False. Nothing will be saved....")
@@ -187,11 +187,14 @@ def make_APDRC_file(data, fname, debug=False, w=False):
         plt.show()
 
 
-    save_arr = np.array((xx, exp_(xx, *abc))).T.astype(str)
-    np.savetxt(fname, save_arr, fmt="""\"%s\"""", delimiter=',')
+    if fname:
+        save_arr = np.array((xx, exp_(xx, *abc))).T.astype(str)
+        np.savetxt(fname, save_arr, fmt="""\"%s\"""", delimiter=',')
+
+    return abc
 #
 
-def make_CVRC_file(data, fname, debug=False, s=10, w=False):
+def make_CVR_curve(data, fname=None, debug=False, s=10, w=False):
 
     if os.path.exists(fname) and not w:
         print(f"Warning {fname} already exists and overwitting option is set to False. Nothing will be saved....")
@@ -213,13 +216,14 @@ def make_CVRC_file(data, fname, debug=False, s=10, w=False):
 
     if debug:
         print("a b c: ", abc )
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
         sns.scatterplot(x='DI', y='CV', hue='node_dest', style='node_or', data=data_df, ax=ax)
         ax.plot(xx, exp_(xx, *abc), 'k-')
         plt.show()
 
-    save_arr = np.array( (xx, exp_(xx, *abc) *s) ).T.astype(str)
-    np.savetxt(fname, save_arr, fmt="""\"%s\"""", delimiter=',')
+    if fname:
+        save_arr = np.array( (xx, exp_(xx, *abc) *s) ).T.astype(str)
+        np.savetxt(fname, save_arr, fmt="""\"%s\"""", delimiter=',')
 #
 
 def compute_restitution_curves(path=None, APD_df=None, CV_df=None, cell_type=None, bz=False, w=False, debug=False):
