@@ -252,6 +252,32 @@ def compute_restitution_curves(path=None, APD_df=None, CV_df=None, cell_type=Non
         make_CVRC_file(CV_df, fname, debug=debug, s=s, w=w)
 
 
+def make_APDR_surface(data, fname=None, debug=False, w=False):
+
+    apd   = data['APD'].to_numpy()
+    di    = data['DI'].to_numpy()
+    apd_1 = data['APD+1'].to_numpy()
+
+    print("APD", apd.min(), apd.max())
+    print("DI", di.min(), di.max())
+
+    if debug:
+        fig = plt.figure()
+        ax0 = fig.add_subplot(121)
+        ax1 = fig.add_subplot(122, projection='3d')
+        ax1.scatter(apd, di, apd_1, c=apd_1)
+        ax0.scatter(di, apd_1, c=apd_1)
+        plt.show()
+
+def make_CVR_surface(data, fname=None, debug=False, w=False):
+    pass
+
+def compute_restitution_surfaces(path, cell_type=None, bz=False, w=False, debug=False):
+
+    APD_df, CV_df = load_dataframes(path)
+
+    make_APDR_surface(data=APD_df, debug=debug, w=w)
+
 
 if __name__ == '__main__':
 
@@ -292,4 +318,5 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    compute_restitution_curves(path=args.path, cell_type=args.myo, bz=args.bz, w=args.w, debug=args.debug)
+    #compute_restitution_curves(path=args.path, cell_type=args.myo, bz=args.bz, w=args.w, debug=args.debug)
+    compute_restitution_surfaces(path=args.path, cell_type=args.myo, bz=args.bz, w=args.w, debug=args.debug)
