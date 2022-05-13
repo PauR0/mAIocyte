@@ -18,7 +18,9 @@ from utils import check_s2_params
 FILE_DIR = sys.path[0]
 if not FILE_DIR:
     FILE_DIR='.'
-TEMP_PATH = FILE_DIR+'/BLOQUE_12x12_250micras'
+#TEMP_PATH = FILE_DIR+'/BLOQUE_12x12_250micras'
+TEMP_PATH = FILE_DIR+'/Long_Slab_300x20000x250_micrometros'
+
 
 def make_stimulus_file(path,
                        s1,
@@ -77,20 +79,64 @@ def make_stimulus_file(path,
     return os.path.split(fname)[1], t
 #
 
+def make_fibre_file(path, myo, bz, w=False):
+    """
+    Create the fibre file according to the element properties and cell models defined at PROP_NOD (main).
+
+    Arguments:
+    ------------
+        path :  str
+            Path to the case directory
+
+        myo  : int
+            Cell model expressed in the PROP_NOD
+
+        bz : bool
+            Not used
+
+        w : bool
+            Wether to overwrite
+    """
+
+
+    fibre_fname = path+'/data/fibre.dat'
+    if os.path.exists(fibre_fname) and not w:
+        print(f"WARNING: file {fibre_fname} already exists and overwite is set to false...")
+
+    if myo in [2,3,4]:
+        material = 8
+    elif myo in [5,6,7]:
+        material = 9
+    elif myo == 8:
+        material = 2
+
+    with open(fibre_fname, 'r') as fr:
+        lines = fr.readlines()
+
+    with open(fibre_fname, 'w') as fw:
+        for i, l in enumerate(lines):
+            if i == 1:
+                l = f"1\t {material}\t 0\t 3\t 0.0 1.0 0.0\n"
+            fw.write(l)
+#
+
 def make_node_file(path, myo, bz, w=False):
 
     nodes_fname = path+'/data/nodes.dat'
     if os.path.exists(nodes_fname) and not w:
         print(f"WARNING: file {nodes_fname} already exists and overwite is set to false...")
 
-    if myo == 'ttendo':
+    if myo == 'CM':
         myo = 1
-    elif myo == 'ttmid':
+    elif myo == 'ttendo':
         myo = 2
-    elif myo.lower() == 'ttepi':
+    elif myo == 'ttmid':
         myo = 3
+    elif myo.lower() == 'ttepi':
+        myo = 4
     else:
         print("ERROR: myo arg could not be understood. Available values are: \n",
+             "CM : Courtemanche "
              "ttendo : tenTusscher ENDO,\n",
              "ttmid : tenTusscher MID,\n",
              "ttepi : tenTusscher EPI")
@@ -105,8 +151,10 @@ def make_node_file(path, myo, bz, w=False):
         with open(nodes_fname, 'w') as fw:
             for i, l in enumerate(lines):
                 if i > 1:
-                    l = re.sub('\t1\t', f'\t{myo}\t', l)
+                    l = re.sub('\s+1\s+', f'\t{myo}\t', l, count=1)
                 fw.write(l)
+        make_fibre_file(path, myo, bz, w=w)
+#
 
 def make_output_dir(path, s1, s2_step, w=False):
 
@@ -121,6 +169,7 @@ def make_output_dir(path, s1, s2_step, w=False):
     os.mkdir(dname)
 
     return dname
+#
 
 def make_main_file(path, s1, s2_step, sti_fname, t_max, dt):
 
@@ -155,6 +204,7 @@ def make_main_file(path, s1, s2_step, sti_fname, t_max, dt):
 
 
     return main_fname
+#
 
 def make_run_post_config_file(path, ncores, s1, s2_step, ftype=1):
 
@@ -191,6 +241,7 @@ def make_run_post_config_file(path, ncores, s1, s2_step, ftype=1):
             f.write(line)
 
     return fname
+#
 
 def make_case(path,
               s1,
