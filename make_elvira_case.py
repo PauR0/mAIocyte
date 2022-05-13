@@ -304,7 +304,7 @@ if __name__ == '__main__':
     parser.add_argument('-n',
                         '--n-cores',
                         dest='nc',
-                        default=4,
+                        default=8,
                         action='store',
                         type=int,
                         help="""Number of cores to use for runing the simulation.""")
