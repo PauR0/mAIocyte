@@ -6,7 +6,7 @@ import re
 
 import argparse
 
-from time import sleep
+from subprocess import Popen
 
 from distutils.dir_util import copy_tree
 
@@ -189,6 +189,7 @@ def make_case(path,
               in_path=False,
               bz=False,
               run=False,
+              wait=False,
               run_post=False,
               n_cores=6,
               w=False):
@@ -217,20 +218,17 @@ def make_case(path,
 
     main_file_fname = make_main_file(path, s1, s2_step, stimulus_fname, t_max)
 
-    exec_command = FILE_DIR + f"/runelvBZ.sh {n_cores} {main_file_fname} {output_dname}/ {output_dname}/log &"
+    exec_command = [FILE_DIR + "/runelvBZ.sh", str(n_cores), main_file_fname, f"{output_dname}/", f"{output_dname}/log"]
     if run:
-        if os.path.exists("endelv.dat"):
-            os.remove("endelv.dat")
-        os.system(exec_command)
+        spro = Popen(exec_command)
 
+    if wait or run_post:
+        spro.communicate()
     if run_post:
-        while not os.path.exists("endelv.dat"):
-            sleep(30)#Sleep 30 seconds
-        os.remove("endelv.dat")
         post_config_fname = make_run_post_config_file(path, n_cores, s1, s2_step)
         exec_command = FILE_DIR + f"/runpost.sh {post_config_fname} {output_dname} &"
-        os.system(exec_command)
-
+        spro = Popen(exec_command)
+#
 
 
 if __name__ == '__main__':
