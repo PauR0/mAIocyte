@@ -243,10 +243,13 @@ class SensElvExp:
 
         self.__debug : bool = False
 
-        self.__s1 : int = None
-        self.__s2_step : int = None
+        self.s1        : int = None
+        self.s2_ini    : int = None
+        self.s2_end    : int = 250
+        self.s2_step   : int = 20
+        self.tr_offset : int = 0
         self.s1_per_s2 : int = 9
-        self.min_s2 : int = 250
+
         self.DI_CV_df : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'DI_or', 'DI_dest', 'CV', 'cell_type', 'node_or', 'node_dest'])
         self.APD_DI_df : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'APD', 'DI', 'APD+1', 'cell_type', 'node_id'])
         self.stimuli_segmented : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'DI', 'AP+1', 't_act', 'AP', 'cell_type', 'node_id', "APD", "DI","APD+1"])
@@ -310,31 +313,6 @@ class SensElvExp:
     @nodes.deleter
     def nodes(self):
         del self.__nodes
-    #
-
-    #S1
-    @property
-    def s1(self):
-        return self.__s1
-    @s1.setter
-    def s1(self, s):
-        self.__s1 = s
-    @s1.deleter
-    def s1(self):
-        del self.__s1
-    #
-
-
-    #S2 decreasing step
-    @property
-    def s2_step(self):
-        return self.__s2_step
-    @s2_step.setter
-    def s2_step(self, st):
-        self.__s2_step = st
-    @s2_step.deleter
-    def s2_step(self):
-        del self.__s2_step
     #
 
     def load_node_info(self):
