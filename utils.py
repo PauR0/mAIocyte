@@ -33,3 +33,36 @@ def check_s2_params(s2_ini, s2_end, s2_step):
             s2_step *= -1
 
     return s2_step, cond
+
+def check_attrs(obj, attr_names, err_message=None):
+    """Check if given obj has the attributes in
+    attr_names or id defined check if they are None.
+
+    Arguments:
+    ----------
+        obj : any
+            The object to be checked
+
+        attr_names : list[str]
+            The list of the names of the attributes to check.
+
+        err_message : str, optional
+            The error message to display. At the end of the message
+            the followin text will be appedned:
+                " {attr} has not been set."
+
+
+    """
+
+    for attr in attr_names:
+            if not hasattr(obj, attr):
+                if err_message is not None:
+                    print(f"{err_message} \n\t {attr} has not been set")
+                return
+            elif getattr(obj, attr) is None:
+                if err_message is not None:
+                    print(f"{err_message}, \n\t{attr} has not been set")
+                return
+
+    return True
+#

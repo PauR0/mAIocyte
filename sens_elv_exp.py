@@ -17,6 +17,8 @@ import matplotlib.pyplot as plt
 
 import pyvista as pv
 
+from utils import check_attrs, check_s2_params
+
 
 def compute_max_der_and_perc_repolarization(t, ap, perc=0.9, full_output=False, show=False):
     """Compute the times for the points
@@ -49,38 +51,6 @@ def compute_max_der_and_perc_repolarization(t, ap, perc=0.9, full_output=False, 
     return t_max_der, apdq_t
 #
 
-def check_attrs(obj, attr_names, err_message=None):
-    """Check if given obj has the attributes in
-    attr_names or id defined check if they are None.
-
-    Arguments:
-    ----------
-        obj : any
-            The object to be checked
-
-        attr_names : list[str]
-            The list of the names of the attributes to check.
-
-        err_message : str, optional
-            The error message to display. At the end of the message
-            the followin text will be appedned:
-                " {attr} has not been set."
-
-
-    """
-
-    for attr in attr_names:
-            if not hasattr(obj, attr):
-                if err_message is not None:
-                    print(f"{err_message} \n\t {attr} has not been set")
-                return
-            elif getattr(obj, attr) is None:
-                if err_message is not None:
-                    print(f"{err_message}, \n\t{attr} has not been set")
-                return
-
-    return True
-#
 
 def filter_peaks_by_stimuli_pairs_and_value(minpeaks, maxpeaks, mp_a=-np.inf, mp_b=np.inf, Mp_a=-np.inf, Mp_b=np.inf):
     """
