@@ -300,6 +300,18 @@ class SensElvExp:
         del self.__cell_type
     #
 
+    #Nodes to evaluate
+    @property
+    def nodes(self):
+        return self.__nodes
+    @nodes.setter
+    def nodes(self, nd):
+        self.__nodes = nd
+    @nodes.deleter
+    def nodes(self):
+        del self.__nodes
+    #
+
     #S1
     @property
     def s1(self):
@@ -312,17 +324,6 @@ class SensElvExp:
         del self.__s1
     #
 
-    #S2 decreasing step
-    @property
-    def nodes(self):
-        return self.__nodes
-    @nodes.setter
-    def nodes(self, nd):
-        self.__nodes = nd
-    @nodes.deleter
-    def nodes(self):
-        del self.__nodes
-    #
 
     #S2 decreasing step
     @property
