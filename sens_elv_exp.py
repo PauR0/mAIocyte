@@ -249,8 +249,8 @@ class SensElvExp:
         self.tr_offset : int = 0
         self.s1_per_s2 : int = 9
 
-        self.DI_CV_df : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'DI_or', 'DI_dest', 'CV', 'cell_type', 'node_or', 'node_dest'])
-        self.APD_DI_df : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'APD', 'DI', 'APD+1', 'cell_type', 'node_id'])
+        self.CV_DI : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'DI_or', 'DI_dest', 'CV', 'cell_type', 'node_or', 'node_dest'])
+        self.APD_DI : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'APD', 'DI', 'APD+1', 'cell_type', 'node_id'])
         self.stimuli_segmented : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'DI', 'AP+1', 't_act', 'AP', 'cell_type', 'node_id', "APD", "DI","APD+1"])
     #
 
@@ -377,174 +377,180 @@ class SensElvExp:
                 os.remove(f'{self.output_path}/{vf}')
     #
 
-    def get_stimuli_of_interest(self, node_id, t_ini, t_end, s2, show=False):
+    def extract_S1S2(self, node_id=None, extract_ids=True):
 
         """
-        TODO:Document propperly
 
-        This function returns the index of 3 minpeaks and 2 maxpeaks of the last two stimuli of a stimuli train
-        in the node.time and node.AP array.
+        TODO: Documentation
 
-        Args:
-        ------
-            node_id : str
-                Key of the node in self.node dict
-
-            t_ini, t_end : float
-
-            s2 : int
-
-        Returns:
-        ---------
-            mpoi : list[int]
-                List of minpeak times
-
-            Mpoi : list[int]
-                List of maxpeak times
         """
-        node = self.nodes[node_id]
 
-        #Get peaks between t_ini and t_end
-        max_peaks_ids = (node.peaks['max'][0] >= t_ini) & (node.peaks['max'][0] < t_end)
-        n_peaks = np.sum(max_peaks_ids, dtype=int)
-
-        #75% of the expected maxpeaks
-        if n_peaks < self.s1_per_s2*0.75:
-            print(f"WARNING: cell type {self.cell_type}, s1 {self.s1}, s2 {s2} at node {node_id}: \n\tBetween {t_ini} and {t_end} node {node_id} has {n_peaks} peaks instead of the {self.s1_per_s2 + 1} expected, APD-DI-APD wont be computed.....")
-            return None, None
-
-        #time of the previous minpeak to t_end, this is expected to be S2
-        ps2_t = np.max(node.peaks['min'][0][(node.peaks['min'][0] < t_end)])
-        #id in time list of ps2 in the full list
-        ps2_i = np.argwhere(node.time == ps2_t)[0,0]
-        #id in time list of ps2 in the peaks list
-        ps2_ii = np.argmax(node.peaks['min'][0][(node.peaks['min'][0] < t_end)])
-
-        #peaks of interest
-        s2_Mpi = np.argmin(np.abs(node.peaks['max'][0] - ps2_t)) #The next maxpeak to the S2 minpeak
-        if node.peaks['max'][0][s2_Mpi] < ps2_t:
-            s2_Mpi += 1
-
-        Mpoi_t = node.peaks['max'][0][[s2_Mpi-1, s2_Mpi]]
-        Mpoi_i = [np.argwhere(node.time == t)[0, 0] for t in Mpoi_t]
-        mpoi_t = node.peaks['min'][0][[ps2_ii-1, ps2_ii, ps2_ii+1]] #The time of the minpeaks sorrounding the S2
-        mpoi_i = [np.argwhere(node.time == t)[0,0] for t in mpoi_t] #The ids of the minpeaks sorrounding the S2
-
-        if show:
-            t_ini_i = np.argwhere(node.time == t_ini)[0,0]
-            t_end_i = np.argwhere(node.time == t_end)[0,0]
-            plt.title(f'{self.cell_type} S1 {self.s1} S2 {s2} at node {node_id}')
-            plt.plot(node.time[t_ini_i:t_end_i], node.AP[t_ini_i:t_end_i], 'gray', linestyle='-.')
-            plt.plot(node.time[mpoi_i[0]:mpoi_i[-1]], node.AP[mpoi_i[0]:mpoi_i[-1]], 'k')
-            max_peaks_ids = (node.peaks['max'][0] >= t_ini) & (node.peaks['max'][0] < t_end)
-            plt.plot(node.peaks['max'][0][max_peaks_ids], node.peaks['max'][1][max_peaks_ids], 'r*')
-            plt.plot(mpoi_t, node.AP[mpoi_i], 'c*')
-            plt.axvspan(mpoi_t[0], mpoi_t[-1], color='y', alpha=0.3)
-            plt.plot(Mpoi_t, node.AP[Mpoi_i], 'g*')
-            plt.tight_layout()
-            plt.show()
-
-        if mpoi_t[2]-mpoi_t[1]> self.s1+s2/2:
-            print(f"WARNING: cell type {self.cell_type}, s1 {self.s1}, s2 {s2} at node {node_id}:",
-                    f"The last activation was {mpoi_t[2]-mpoi_t[1]}, which is greater than s1+s2/2= {self.s1+s2/2}. APD-DI-APD wont be computed.....")
-            return None, None
-
-
-        return mpoi_i, Mpoi_i
-    #
-
-    def compute_APD_DI_df(self, node_id=None, save_csv=False, w=False):
-
-        if not check_attrs(self, ['nodes', 's1', 's2_step', 's1_per_s2', 'min_s2', 'cell_type'], "Can't compute APD and DI"):
+        if node_id is None:
+            for nid in self.nodes:
+                self.extract_S1S2(node_id=nid, extract_ids=extract_ids)
             return
 
+        node = self.nodes[node_id]
+
+        S1S2 = []
+        S2s = []
+
+        s2_step, cond = check_s2_params(s2_ini=self.s2_ini, s2_end=self.s2_end, s2_step=self.s2_step)
+
+        s2 = self.s2_ini
+        t0 = node.peaks['min'][0, np.abs(node.peaks['min'][0] - 0).argmin()]
+        t_ini = t0 + (self.s1_per_s2-1) * self.s1
+        t_end = t_ini + s2 + min(self.tr_offset * 0.75, 1000)
+
+        while cond(s2):
+
+            #Get the min peak of the S1 before the S2
+            mp_S1_i = np.abs(node.peaks['min'][0] - t_ini).argmin()
+
+            #t_ini is an underestimation of the activation, thus the peak should be after t_ini.
+            if node.peaks['min'][0, mp_S1_i] < t_ini:
+                mp_S1_i +=1
+
+            #We store the delay between the estimated activation and the peak
+            d = np.abs(node.peaks['min'][0, mp_S1_i] - t_ini)
+
+            mp_S1  = node.peaks['min'][:, mp_S1_i]
+
+            #We check the following min peak as it should be the S2.
+            if np.abs(node.peaks['min'][0, mp_S1_i] - node.peaks['min'][0, mp_S1_i+1]) < s2 * 1.2:
+                mp_S2_i = mp_S1_i+1
+                mp_S2  = node.peaks['min'][:, mp_S2_i]
+
+                #For the ending point we take the minimum between the following min peak's time and 1000 ms after the S2 min peak.
+                arr_aux = np.array([node.peaks['min'][0, mp_S2_i]+1000, node.peaks['min'][0, mp_S2_i+1]])
+                iaux = arr_aux.argmin()
+                if iaux == 0:
+                    jaux = np.abs(node.time-arr_aux[iaux]).argmin()
+                    END = np.array([node.time[jaux], node.AP[jaux]])
+                else:
+                    END = node.peaks['min'][:, mp_S2_i+1]
+
+                S1S2.append([mp_S1, mp_S2, END])
+                S2s.append(s2)
+
+                if self.debug:
+                    ids = (node.time > t0) & (node.time < min(t_end, END[0]))
+                    plt.plot(node.time[ids] - t0, node.AP[ids])
+                    plt.axvspan(t0 - t0, mp_S1[0] - t0, facecolor='b', alpha=0.3, label="Stimuli train")
+                    plt.axvspan(mp_S1[0]- t0, mp_S2[0] - t0, facecolor='y', alpha=0.3, label="S1")
+                    plt.axvspan(mp_S2[0]- t0, END[0]   - t0, facecolor='r', alpha=0.3, label="S2")
+                    plt.show()
+                    input('Do you want to keep going on?(y/Ctrl+c)')
+            else:
+                print(f"WARNING :: Node {node_id} cell type {self.cell_type}, s1 {self.s1}, s2 {s2}:\n",
+                      f"The S1 happens at {node.peaks['min'][0, mp_S1_i+1]}, the following minimum peak occurs at {node.peaks['min'][0, mp_S1_i+1]}. \n"
+                      f"It exceeds the limit (S2*1.2={s2*1.2:.2f}) that would be at {node.peaks['min'][0, mp_S1_i+1]+s2*1.2:.2f}")
+
+            s2 += s2_step
+            t0 += self.s1_per_s2 * self.s1 + s2 + self.tr_offset + d
+            t_ini = t0 + (self.s1_per_s2-1) * self.s1
+            t_end = t_ini + s2 + min(self.tr_offset * 0.75, 1000)
+
+        node.S1S2 = np.array(S1S2)
+        node.S2s = np.array(S2s)
+
+        if extract_ids:
+            self.extract_S1S2_global_ids(node_id=node_id)
+   #
+
+    def extract_S1S2_global_ids(self, node_id=None):
+
+        if not check_attrs(self, ['nodes'], "Can't extract global ids."):
+            return
+
+        if node_id is None:
+            for nid in self.nodes:
+               self.extract_S1S2_global_ids(node_id=nid)
+            return
+
+        node = self.nodes[node_id]
+
+        if not check_attrs(node, ['S1S2'], f"Node {node_id} dont have S1S2 info..."):
+            return
+
+        glob_ids = [[np.abs(node.time - p[0]).argmin() for p in s1s2] for s1s2 in node.S1S2]
+
+        node.S1S2_gids = glob_ids
+    #
+
+    def compute_APD_DI(self, node_id=None, save_csv=False, w=False):
+
+        if not check_attrs(self, ['nodes', 'cell_type'], "Can't compute APD and DI"):
+            return
 
         if node_id is None:
             for nid in self.nodes.keys():
-                self.compute_APD_DI_df(node_id=nid, save_csv=False)
+                self.compute_APD_DI(node_id=nid, save_csv=False)
             if save_csv:
-                self.save_APD_DI_df(w=w)
+                self.save_APD_DI(w=w)
             return
 
         node = self.nodes[node_id]
+
+        if not check_attrs(node, ['S2s', 'S1S2_gids'], f"ERROR: Can't compute APD and DI at node {node_id}"):
+            return
+
         data = []
+        for s2, [i1,i2,ie] in zip(node.S2s, node.S1S2_gids):
 
-        s2 = self.s1 - self.s2_step
-        t_ini = 0
-        t_end =int(t_ini + (self.s1_per_s2 * self.s1) + s2/2)
+            S1_md_t, S1_apd90_t = compute_max_der_and_perc_repolarization(node.time[i1:i2], node.AP[i1:i2], perc=0.9, show=self.debug)
+            S2_md_t, S2_apd90_t = compute_max_der_and_perc_repolarization(node.time[i2:ie], node.AP[i2:ie], perc=0.9, show=self.debug)
 
-        end = False
+            data.append({'S1'        : self.s1,
+                         'S2'        : s2,
+                         'APD'       : S1_apd90_t - S1_md_t,
+                         'DI'        : S2_md_t - S1_apd90_t,
+                         'APD+1'     : S2_apd90_t - S2_md_t,
+                         'cell_type' : self.cell_type,
+                         'node_id'   : node_id })
 
-        while not end:
-            ps2 = np.argmax(node.peaks['min'][0][(node.peaks['min'][0] < t_end)]).astype(int) #previous minpeak to t_end, this is expected to be S2
-            max_ders = []
-            apd90s = []
-            poi, _ = self.get_stimuli_of_interest(node_id, t_ini=t_ini, t_end=t_end, s2=s2, show=self.debug)
-            if poi is not None:
-                for i, p in enumerate(poi[:-1]):
-                    t = node.time[p:poi[i+1]]
-                    ap = node.AP[p:poi[i+1]]
-                    md_t, apd90_t = compute_max_der_and_perc_repolarization(t, ap, perc=0.9, show=self.debug)
-                    max_ders.append(md_t)
-                    apd90s.append(apd90_t)
-                data.append({'S1'        : self.s1,
-                            'S2'        : s2,
-                            'APD'       : apd90s[0] - max_ders[0],
-                            'DI'        : md_t - apd90s[0],
-                            'APD+1'     : apd90_t - md_t,
-                            'cell_type' : self.cell_type,
-                            'node_id'   : node_id })
+            if self.debug:
+                    print(data[-1])
 
-                if self.debug:
-                        md_i0 = np.argwhere(node.time == max_ders[0])[0,0]
-                        apd_i0 = np.argwhere(node.time == apd90s[0])[0,0]
-                        apd0_i0 = poi[0] + np.argmin(np.abs(node.AP[poi[0]:apd_i0-20] - node.AP[apd_i0]))
+                    md_i0   = np.abs(node.time - S1_md_t   ).argmin()
+                    apd_i0  = np.abs(node.time - S1_apd90_t).argmin()
+                    apd0_i0 = i1 + np.argmin(np.abs(node.AP[i1:apd_i0-20] - node.AP[apd_i0]))
+
+                    md_i1   = np.abs(node.time - S2_md_t).argmin()
+                    apd_i1  = np.abs(node.time - S2_apd90_t).argmin()
+                    apd0_i1 = i2 + np.argmin(np.abs(node.AP[i2:apd_i1-20] - node.AP[apd_i1]))
 
 
-                        md_i1 = np.argwhere(node.time == md_t)[0,0]
-                        apd_i1 = np.argwhere(node.time == apd90_t)[0,0]
-                        apd0_i1 = poi[1] + np.argmin(np.abs(node.AP[poi[1]:apd_i1-20] - node.AP[apd_i1]))
+                    plt.rcParams.update({'font.size': 18})
+                    fig = plt.figure()
+                    fig.suptitle(f'{self.cell_type} S1 {self.s1} S2 {s2}')
 
+                    ax1 = fig.add_subplot(1, 1, 1)
+                    ax1.plot(node.time[i1:ie], node.AP[i1:ie], 'k', linestyle='-', label='AP')
+                    ymin, ymax = ax1.get_ylim()
 
-                        plt.rcParams.update({'font.size': 18})
-                        fig = plt.figure()
-                        fig.suptitle(f'{self.cell_type} S1 {self.s1} S2 {s2}')
+                    ax1.axvspan(node.time[md_i0], node.time[apd_i0], facecolor='b', alpha=0.3, label="APD-1")
+                    ax1.plot([node.time[apd0_i0], node.time[apd_i0]], [node.AP[apd_i0]]*2, '--', color='gray', label="APD-1")
+                    ax1.text(np.mean([node.time[apd0_i0]-50, node.time[apd_i0]]), node.AP[apd_i0]+5, 'APD$_{t-1}$', fontdict={"usetex": True, 'size': 18} )
 
-                        ax1 = fig.add_subplot(1, 1, 1)
-                        ax1.plot(node.time[poi[0]:poi[-1]], node.AP[poi[0]:poi[-1]], 'k', linestyle='-', label='AP')
-                        ymin, ymax = ax1.get_ylim()
+                    ax1.axvspan(node.time[apd_i0], node.time[md_i1], facecolor='g', alpha=0.3, label="DI")
+                    ax1.plot([node.time[apd_i0], node.time[md_i1]], [min(node.AP[apd_i0], node.AP[md_i1])]*2, '--', color='gray', label="DI")
+                    #ax1.text(np.mean([node.time[apd_i0], node.time[md_i1]])-10, min(node.AP[apd_i0], node.AP[md_i1])+5, 'DI', fontdict={"usetex": True,'size': 18} )
 
-                        ax1.axvspan(node.time[md_i0], node.time[apd_i0], facecolor='b', alpha=0.3, label="APD-1")
-                        ax1.plot([node.time[apd0_i0], node.time[apd_i0]], [node.AP[apd_i0]]*2, '--', color='gray', label="APD-1")
-                        ax1.text(np.mean([node.time[apd0_i0]-50, node.time[apd_i0]]), node.AP[apd_i0]+5, 'APD$_{t-1}$', fontdict={"usetex": True, 'size': 18} )
+                    ax1.axvspan(node.time[md_i1], node.time[apd_i1], facecolor='b', alpha=0.3, label="APD")
+                    ax1.plot([node.time[apd0_i1], node.time[apd_i1]], [node.AP[apd_i1]]*2, color='gray', linestyle='--', label="APD")
+                    #ax1.text(np.mean([node.time[apd0_i1], node.time[apd_i1]])-50, node.AP[apd_i1]+5, 'APD', fontdict={"usetex": True,'size': 18} )
+                    #ax1.legend()
+                    plt.show()
+                    input('Do you want to keep going on?(y/Ctrl+c)')
 
-                        ax1.axvspan(node.time[apd_i0], node.time[md_i1], facecolor='g', alpha=0.3, label="DI")
-                        ax1.plot([node.time[apd_i0], node.time[md_i1]], [min(node.AP[apd_i0], node.AP[md_i1])]*2, '--', color='gray', label="DI")
-                        ax1.text(np.mean([node.time[apd_i0], node.time[md_i1]])-10, min(node.AP[apd_i0], node.AP[md_i1])+5, 'DI', fontdict={"usetex": True,'size': 18} )
-
-                        ax1.axvspan(node.time[md_i1], node.time[apd_i1], facecolor='b', alpha=0.3, label="APD")
-                        ax1.plot([node.time[apd0_i1], node.time[apd_i1]], [node.AP[apd_i1]]*2, color='gray', linestyle='--', label="APD")
-                        ax1.text(np.mean([node.time[apd0_i1], node.time[apd_i1]])-50, node.AP[apd_i1]+5, 'APD', fontdict={"usetex": True,'size': 18} )
-                        #ax1.legend()
-                        plt.show()
-
-            s2 -= self.s2_step
-            if ps2 < len(node.peaks['min'][0])-1:
-                t_ini = int(node.peaks['min'][0][ps2+1])
-                t_end = int(t_ini + self.s1_per_s2 * self.s1 + s2/2)
-
-            if s2 <= self.min_s2:
-                end = True
-            if t_end >= np.max(node.time):
-                end = True
-
-        self.APD_DI_df = self.APD_DI_df.append(data, ignore_index=True)
+        self.APD_DI = self.APD_DI.append(data, ignore_index=True)
 
         if save_csv:
-            self.save_APD_DI_df(w=w)
+            self.save_APD_DI(w=w)
     #
 
-    def save_APD_DI_df(self, w=False):
+    def save_APD_DI(self, w=False):
 
         save_dir = self.path+'/Rest_Curve_data'
         if not os.path.exists(save_dir) or not os.path.isdir(save_dir):
@@ -554,116 +560,83 @@ class SensElvExp:
             print(f"WARNING: {fname} already exists and overwrite is set to false, nothing will be saved....")
         else:
             if self.debug:
-               print(self.APD_DI_df.to_markdown())
-            self.APD_DI_df.to_csv(fname)
+               print(self.APD_DI.to_markdown())
+            self.APD_DI.to_csv(fname)
     #
 
     def compute_DI_CV(self, node_order=None, save_csv=False, w=False):
 
-        if not check_attrs(self, ['nodes', 's1', 's2_step', 's1_per_s2', 'min_s2', 'cell_type'], "Can't compute CV and DI"):
+        if not check_attrs(self, ['nodes', 'cell_type'], "Can't compute CV and DI"):
             return
 
         if node_order is None:
-            node_order = sorted([n for n in self.nodes.keys()])
+            node_order = sorted(list(self.nodes), key=lambda n: self.nodes[n].loc[-1])
 
         data = []
 
         for kk, ii in enumerate(node_order[:-1]):
 
             node = self.nodes[ii]
+            for s2, [i1,i2,ie] in zip(node.S2s, node.S1S2_gids):
+                _, or_S1_apd90_t = compute_max_der_and_perc_repolarization(node.time[i1:i2], node.AP[i1:i2], perc=0.9, show=self.debug)
+                or_S2_md_t, _    = compute_max_der_and_perc_repolarization(node.time[i2:ie], node.AP[i2:ie], perc=0.9, show=self.debug)
 
-            s2 = self.s1 - self.s2_step
-            t_ini = 0
-            t_end = int(t_ini + (self.s1_per_s2 * self.s1) + s2/2)
-
-            end = False
-            while not end:
-                ps2 = np.argmax(node.peaks['min'][0][(node.peaks['min'][0] < t_end)]).astype(int) #previous minpeak to t_end, this is expected to be S2
-                apd90s = []
-                mpoi, Mpoi = self.get_stimuli_of_interest(ii, t_ini=t_ini, t_end=t_end, s2=s2, show=False)
-                if mpoi is not None:
-
-                    for i, p in enumerate(mpoi[:-1]):
-                        t = node.time[p:mpoi[i+1]]
-                        ap = node.AP[p:mpoi[i+1]]
-                        or_md_t, apd90_t = compute_max_der_and_perc_repolarization(t, ap, perc=0.9, show=False)
-                        apd90s.append(apd90_t)
-
-                    for jj in node_order[kk+1:]:
-                        dest_node = self.nodes[jj]
+                for jj in node_order[kk+1:]:
+                    dest_node = self.nodes[jj]
+                    aux = dest_node.S2s == s2
+                    if aux.any():
+                        s2i = aux.argmax()
+                        [j1,j2,je]  = dest_node.S1S2_gids[s2i]
+                        _, dest_S1_apd90_t = compute_max_der_and_perc_repolarization(dest_node.time[j1:j2], dest_node.AP[j1:j2], perc=0.9, show=self.debug)
+                        dest_S2_md_t, _    = compute_max_der_and_perc_repolarization(dest_node.time[j2:je], dest_node.AP[j2:je], perc=0.9, show=self.debug)
                         d_ij = np.linalg.norm(node.loc - dest_node.loc)
-                        dest_apd90s = []
-                        dest_mpoi, dest_Mpoi = self.get_stimuli_of_interest(jj, t_ini=t_ini, t_end=t_end, s2=s2, show=False)
-                        if dest_mpoi is not None:
-                            for i, p in enumerate(dest_mpoi[:-1]):
-                                t = dest_node.time[p:dest_mpoi[i+1]]
-                                ap = dest_node.AP[p:dest_mpoi[i+1]]
-                                dest_md_t, dest_apd90_t = compute_max_der_and_perc_repolarization(t, ap, perc=0.9, show=False)
-                                dest_apd90s.append(dest_apd90_t)
-                            data.append({'S1'       : self.s1,
-                                         'S2'        : s2,
-                                         'DI_or'     : or_md_t - apd90s[0],
-                                         'DI_dest'   : dest_md_t - dest_apd90s[0],
-                                         'CV'        :  d_ij / (dest_md_t - or_md_t),
-                                         'cell_type' : self.cell_type,
-                                         'node_or'   : ii,
-                                         'node_dest' : jj})
+                        data.append({'S1'       : self.s1,
+                                     'S2'        : s2,
+                                     'DI_or'     : or_S2_md_t - or_S1_apd90_t,
+                                     'DI_dest'   : dest_S2_md_t - dest_S1_apd90_t,
+                                     'CV'        :  d_ij / (dest_S2_md_t - or_S2_md_t),
+                                     'cell_type' : self.cell_type,
+                                     'node_or'   : ii,
+                                     'node_dest' : jj})
 
-                            if self.debug:
-                                print(f"Dist {ii} to  {jj} = {d_ij}")
-                                print(data[-1])
-                                print('Origen Y:', node.loc[1], 'T act:', or_md_t)
-                                print('Dest Y:', dest_node.loc[1], 'T act:', dest_md_t)
-                                p = pv.Plotter()
-                                p.add_mesh(self.domain, color='white', opacity=0.5)
-                                p.add_mesh(node.loc, color='red', render_points_as_spheres=True, point_size=10)
-                                p.add_mesh(dest_node.loc, color='green', render_points_as_spheres=True, point_size=10)
-                                p.camera_position = 'xy'
-                                p.camera.azimuth = -180
-                                p.show()
+                        if self.debug:
+                            print(f"Dist {ii} to  {jj} = {d_ij}")
+                            print(data[-1])
+                            print('Origen Y:', node.loc[1], 'T act:', or_S2_md_t)
+                            print('Dest Y:', dest_node.loc[1], 'T act:', dest_S2_md_t)
+                            p = pv.Plotter()
+                            p.add_mesh(self.domain, color='white', opacity=0.5)
+                            p.add_mesh(node.loc, color='red', render_points_as_spheres=True, point_size=10)
+                            p.add_mesh(dest_node.loc, color='green', render_points_as_spheres=True, point_size=10)
+                            p.camera_position = 'xy'
+                            p.camera.azimuth = -180
+                            p.show()
 
-                                or_t_inii = np.argwhere(node.time == t_ini)[0,0]
-                                or_t_endi = np.argwhere(node.time == t_end)[0,0]
-                                dest_t_inii = np.argwhere(dest_node.time == t_ini)[0,0]
-                                dest_t_endi = np.argwhere(dest_node.time == t_end)[0,0]
-
-                                or_md_i = np.argwhere(node.time == or_md_t)[0,0]
-                                dest_md_i = np.argwhere(dest_node.time == dest_md_t)[0,0]
+                            or_md_i = np.argwhere(node.time == or_S2_md_t)[0,0]
+                            dest_md_i = np.argwhere(dest_node.time == dest_S2_md_t)[0,0]
 
 
-                                fig = plt.figure()
-                                fig.suptitle(f'{self.cell_type} S1 {self.s1} S2 {s2} at or_node {ii} dest_node {jj}')
+                            fig = plt.figure()
+                            fig.suptitle(f'{self.cell_type} S1 {self.s1} S2 {s2} at or_node {ii} dest_node {jj}')
 
-                                ax1 = fig.add_subplot(1, 1, 1)
-                                ax1.plot(node.time[or_t_inii:or_t_endi], node.AP[or_t_inii:or_t_endi], 'gray', linestyle='-.', label='_nolegend')
-                                ax1.plot(node.time[mpoi[0]:mpoi[-1]], node.AP[mpoi[0]:mpoi[-1]], color='red', label='Origin AP')
-                                ax1.plot(dest_node.time[dest_t_inii:dest_t_endi], dest_node.AP[dest_t_inii:dest_t_endi], 'gray', linestyle='-.', label='_nolegend')
-                                ax1.plot(dest_node.time[dest_mpoi[0]:dest_mpoi[-1]], dest_node.AP[dest_mpoi[0]:dest_mpoi[-1]], color='green', label='Dest AP')
-                                cv_t = [dest_md_t, or_md_t]
-                                cv_ap = [dest_node.AP[dest_md_i], node.AP[or_md_i]]
-                                ax1.plot(cv_t, cv_ap, 'k-', label='_nolegend')
-                                ymin, ymax = ax1.get_ylim()
-                                ax1.vlines(cv_t, ymin, ymax, 'gray', '-.', label='_nolegend')
-                                ax1.legend()
-                                plt.show()
+                            ax1 = fig.add_subplot(1, 1, 1)
+                            ax1.plot(node.time[i1:ie],      node.AP[i1:ie],      'red',  linestyle='-.',  label='Origin AP')
+                            ax1.plot(dest_node.time[j1:je], dest_node.AP[j1:je], 'green', linestyle=':', label='Dest AP')
+                            cv_t = [dest_S2_md_t, or_S2_md_t]
+                            cv_ap = [dest_node.AP[dest_md_i], node.AP[or_md_i]]
+                            ax1.plot(cv_t, cv_ap, 'k-', label='_nolegend')
+                            ymin, ymax = ax1.get_ylim()
+                            ax1.axvspan(dest_S2_md_t, or_S2_md_t, facecolor='yellow', alpha=0.3, label='lapse')
+                            ax1.legend()
+                            plt.show()
+                            input('Do you want to keep going on?(y/Ctrl+c)')
 
-
-                s2 -= self.s2_step
-                if ps2 < len(node.peaks['min'][0])-1:
-                    t_ini = int(node.peaks['min'][0][ps2+1])
-                    t_end = int(t_ini + self.s1_per_s2 * self.s1 + s2/2)
-                if s2 <= self.min_s2:
-                    end = True
-                if t_end >= np.max(node.time):
-                    end = True
-            #endwhile
-
-        self.DI_CV_df = self.DI_CV_df.append(data, ignore_index=True)
+        self.CV_DI = self.CV_DI.append(data, ignore_index=True)
         if save_csv:
-            self.save_DI_CV_df(w=w)
+            self.save_CV_DI(w=w)
     #
 
-    def save_DI_CV_df(self, w=False):
+    def save_CV_DI(self, w=False):
         save_dir = self.path+'/Rest_Curve_data'
         if not os.path.exists(save_dir) or not os.path.isdir(save_dir):
             os.makedirs(save_dir)
@@ -672,78 +645,82 @@ class SensElvExp:
             print(f"WARNING: {fname} already exists and overwrite is set to false, nothing will be saved....")
         else:
             if self.debug:
-                print(self.DI_CV_df.to_markdown())
-            self.DI_CV_df.to_csv(fname)
+                print(self.CV_DI.to_markdown())
+            self.CV_DI.to_csv(fname)
     #
 
     def signal_segmentation(self, node_id=None, w=False):
 
-        if not check_attrs(self, ['nodes', 's1', 's2_step', 's1_per_s2', 'min_s2', 'cell_type'], "Can't compute APD and DI"):
+        if not check_attrs(self, ['nodes', 'cell_type'], "Can't compute signal segmentation"):
             return
 
 
         if node_id is None:
-            for nid in self.nodes.keys():
+            for nid in self.nodes:
                 self.signal_segmentation(node_id=nid, w=w)
             return
+
         node = self.nodes[node_id]
 
+        if not check_attrs(node, ['S2s', 'S1S2_gids'], f"ERROR: Can't make signal segmentation at node {node_id}"):
+            return
 
         save_dir = self.path+'/seg_stimuli'
         if not os.path.exists(save_dir):
             os.mkdir(save_dir)
 
-        s2 = self.s1 - self.s2_step
-        t_ini = 0
-        t_end =int(t_ini + (self.s1_per_s2 * self.s1) + s2/2)
+        for s2, [i1,i2,ie] in zip(node.S2s, node.S1S2_gids):
 
-        end = False
-        curr_files=os.listdir(save_dir)
-        while not end:
-
-            ps2 = np.argmax(node.peaks['min'][0][(node.peaks['min'][0] < t_end)]).astype(int) #previous minpeak to t_end, this is expected to be S2
             fname = f"{save_dir}/{self.s1}_{s2}_{self.cell_type}_{node_id}.json"
 
             if os.path.exists(fname) and not w:
                 print(f"WARNING: {fname} already already exists, nothing will be written....")
+
             else:
-                poi, _ = self.get_stimuli_of_interest(node_id, t_ini=t_ini, t_end=t_end, s2=s2, show=self.debug)
-                if poi is not None:
-                    md_t0, apd90_t0 = compute_max_der_and_perc_repolarization(node.time[poi[0]:poi[1]], node.AP[poi[0]:poi[1]], perc=0.9, show=self.debug)
-                    md_t1, apd90_t1 = compute_max_der_and_perc_repolarization(node.time[poi[1]:poi[2]], node.AP[poi[1]:poi[2]], perc=0.9, show=self.debug)
-                    # Data to be written
-                    data={
-                        "AP"        : node.AP[poi[0]:poi[1]].tolist(),
-                        "AP+1"      : node.AP[poi[1]:poi[2]].tolist(),
-                        "APD"       : apd90_t0 - md_t0,
-                        "DI"        : md_t1 - apd90_t0,
-                        "APD+1"     : apd90_t0 - md_t0,
-                        "t_act"     : node.time[poi[1]] - node.time[poi[0]],
-                        "t_delta"   : node.time[1] - node.time[0],
-                        "node_id"   : node_id,
-                        "S1"        : self.s1,
-                        "S2"        : s2,
-                        "cell_type" : self.cell_type
-                    }
+                S1_md_t, S1_apd90_t = compute_max_der_and_perc_repolarization(node.time[i1:i2], node.AP[i1:i2], perc=0.9, show=self.debug)
+                S2_md_t, S2_apd90_t = compute_max_der_and_perc_repolarization(node.time[i2:ie], node.AP[i2:ie], perc=0.9, show=self.debug)
+                # Data to be written
+                data={
+                    "AP"        : node.AP[i1:i2].tolist(),
+                    "AP+1"      : node.AP[i2:ie].tolist(),
+                    "APD"       : S1_apd90_t - S1_md_t,
+                    "DI"        : S2_md_t - S1_apd90_t,
+                    "APD+1"     : S2_apd90_t - S2_md_t,
+                    "t_act"     : node.time[i2] - node.time[i1],
+                    "t_delta"   : node.time[1] - node.time[0],
+                    "node_id"   : node_id,
+                    "S1"        : self.s1,
+                    "S2"        : s2,
+                    "cell_type" : self.cell_type
+                }
 
-                    with open(fname, "w") as outfile:
-                        json.dump(data, outfile, indent=4)
-
-            s2 -= self.s2_step
-            if ps2 < len(node.peaks['min'][0])-1:
-                t_ini = int(node.peaks['min'][0][ps2+1])
-                t_end = int(t_ini + self.s1_per_s2 * self.s1 + s2/2)
-
-            if s2 <= self.min_s2:
-                end = True
-            if t_end >= np.max(node.time):
-                end = True
+                with open(fname, "w") as outfile:
+                    json.dump(data, outfile, indent=4)
+                if self.debug:
+                    plt.plot(node.time[i1:i2] - node.time[i1], node.AP[i1:i2], 'r', label='AP')
+                    plt.plot(node.time[i2:ie] - node.time[i1], node.AP[i2:ie], 'g', label='AP+1')
+                    plt.axvline(node.time[i2] - node.time[i1], color='y', label='t_act')
+                    plt.show()
+                    input('Do you want to keep going on?(y/Ctrl+c)')
     #
 
 
 #
 
-def EP_params_from_ELVIRA_simulation(path, s1, s2_step, cell_type, output_path=None, debug=False, w=False):
+def EP_params_from_ELVIRA_simulation(path,
+                                     s1,
+                                     s2_ini=None,
+                                     s2_end=250,
+                                     s2_step=-20,
+                                     s1_per_s2=9,
+                                     tr_offset=0,
+                                     comp_APD=False,
+                                     comp_DI=False,
+                                     seg_sig=False,
+                                     cell_type=None,
+                                     output_path=None,
+                                     debug=False,
+                                     w=False):
 
     exp = SensElvExp()
     exp.path = path
@@ -753,15 +730,31 @@ def EP_params_from_ELVIRA_simulation(path, s1, s2_step, cell_type, output_path=N
         exp.output_path = path+f'/output_{s1}_{s2_step}'
 
     exp.debug = debug
+
+    if s2_ini is None:
+        s2_ini = s1
+
     exp.s1 = s1
+    exp.s2_ini  = s2_ini
+    exp.s2_end  = s2_end
     exp.s2_step = s2_step
+    exp.s1_per_s2 = s1_per_s2
+    exp.tr_offset = tr_offset
     exp.cell_type = cell_type
 
-    exp.load_node_info()
-    exp.save_nodes_npy()
-    #exp.compute_APD_DI_df(save_csv=True, w=w)
-    #exp.compute_DI_CV(save_csv=True, w=w)
-    exp.signal_segmentation(w=w)
+    if comp_APD or comp_DI or seg_sig:
+        exp.load_node_info()
+        exp.save_nodes_npy(rm_var=True)
+        exp.extract_S1S2()
+        if comp_APD:
+            exp.compute_APD_DI(save_csv=True, w=w)
+        if comp_DI:
+            exp.compute_DI_CV(save_csv=True, w=w)
+        if seg_sig:
+            exp.signal_segmentation(w=w)
+    else:
+        print("WARNING: comp_APD and comp_DI and seg_sig are False... . Nothing will be computed...")
+
 #
 
 
@@ -780,6 +773,20 @@ if __name__ == '__main__':
                         help="""Lapse of time between main consecutive stimuli
                         expressed in ms.""")
 
+    parser.add_argument('--s2-end',
+                        dest='s2_end',
+                        default=250,
+                        action='store',
+                        type=float,
+                        help="""Last reached value of S2.""")
+
+    parser.add_argument('--s2-ini',
+                        dest='s2_ini',
+                        type=float,
+                        default=None,
+                        action='store',
+                        help="""Initial S2 for the stimuli train.""")
+
     parser.add_argument('-p',
                         '--s2-step',
                         dest='s2_step',
@@ -788,6 +795,20 @@ if __name__ == '__main__':
                         type=int,
                         help="""Lapse of time between the 10th S1 and the S2 stimuli
                         expressed in ms. Default 20""")
+
+    parser.add_argument('--tr-off',
+                        dest='tr_off',
+                        type=float,
+                        default=0,
+                        action='store',
+                        help="""An extra offset time at the end of each stimuli train.""")
+
+    parser.add_argument('--s1-per-s2',
+                        dest='s1_per_s2',
+                        type=int,
+                        default=9,
+                        action='store',
+                        help="""Number of S1 stimuli before each S2.""")
 
     parser.add_argument('-m',
                         '--myo',
@@ -825,4 +846,14 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    EP_params_from_ELVIRA_simulation(path=args.path, s1=args.s1, s2_step=args.s2_step, cell_type=cell_type, output_path=args.otp_path, debug=args.debug, w=args.w)
+    EP_params_from_ELVIRA_simulation(path=args.path,
+                                     s1=args.s1,
+                                     s2_ini=args.s2_ini,
+                                     s2_end=args.s2_end,
+                                     s2_step=args.s2_step,
+                                     s1_per_s2=args.s1_per_s2,
+                                     tr_offset=args.tr_off,
+                                     cell_type=args.myo,
+                                     output_path=args.otp_path,
+                                     debug=args.debug,
+                                     w=args.w)
