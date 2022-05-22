@@ -290,7 +290,7 @@ class SensElvExp:
         del self.__output_path
     #
 
-    #Cell type used for the experiment, should be in {'ttepi', 'ttmid' ,'ttendo', 'ttepi_bz', 'ttmid_bz' ,'ttendo_bz'}.
+    #Cell type used for the experiment, should be in {'ttepi', 'ttmid' ,'ttendo', 'ttepibz', 'ttmidbz' ,'ttendobz'}.
     @property
     def cell_type(self):
         return self.__cell_type
@@ -793,13 +793,8 @@ if __name__ == '__main__':
                         '--myo',
                         dest='myo',
                         type=str,
-                        help="""Flag to specify if ttepi - ttmid - ttendo.""")
-
-    parser.add_argument('-b',
-                        '--border-zone',
-                        dest='bz',
-                        action='store_true',
-                        help="""This flag is used to indicate if cell type should be considered border zone. Default is False.""")
+                        help="""Flag to specify if the cellular model, should be in
+                        {'CM', 'ttendo', 'ttmid', 'ttepi', 'ttendobz', 'ttmidbz', 'ttepibz' .""")
 
     parser.add_argument('--output-path',
                         dest='otp_path',
@@ -829,9 +824,5 @@ if __name__ == '__main__':
 
 
     args = parser.parse_args()
-
-    cell_type = args.myo
-    if args.bz:
-        cell_type += '_bz'
 
     EP_params_from_ELVIRA_simulation(path=args.path, s1=args.s1, s2_step=args.s2_step, cell_type=cell_type, output_path=args.otp_path, debug=args.debug, w=args.w)
