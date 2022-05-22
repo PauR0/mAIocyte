@@ -676,7 +676,7 @@ class SensElvExp:
 
         for s2, [i1,i2,ie] in zip(node.S2s, node.S1S2_gids):
 
-            fname = f"{save_dir}/{self.s1}_{s2}_{self.cell_type}_{node_id}.json"
+            fname = f"{save_dir}/{self.s1}_{int(s2)}_{self.cell_type}_{node_id}.json"
 
             if os.path.exists(fname) and not w:
                 print(f"WARNING: {fname} already already exists, nothing will be written....")
