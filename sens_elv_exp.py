@@ -9,8 +9,6 @@ import numpy as np
 
 import pandas as pd
 
-from fnmatch import fnmatch
-
 from peaks import peakdetect
 
 import matplotlib.pyplot as plt
