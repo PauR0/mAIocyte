@@ -373,9 +373,12 @@ class SensElvExp:
     def remove_var_files(self):
 
         var_files = [nf for nf in os.listdir(self.output_path) if nf.startswith('prc') and nf.endswith('.var')]
-        if var_files:
-            for vf in var_files:
+        for vf in var_files:
+            i = nf[ nf.rfind('_',)+1 :-4].lstrip('0')
+            if os.path.exists(f'node_{i}.npy'):
                 os.remove(f'{self.output_path}/{vf}')
+            else:
+                print("WARNING: {vf} won't be deleted as its npy version was not found...")
     #
 
     def extract_S1S2(self, node_id=None, extract_ids=True):
@@ -440,6 +443,7 @@ class SensElvExp:
                     plt.axvspan(t0 - t0, mp_S1[0] - t0, facecolor='b', alpha=0.3, label="Stimuli train")
                     plt.axvspan(mp_S1[0]- t0, mp_S2[0] - t0, facecolor='y', alpha=0.3, label="S1")
                     plt.axvspan(mp_S2[0]- t0, END[0]   - t0, facecolor='r', alpha=0.3, label="S2")
+                    plt.title(f"Node: {node_id} {self.cell_type} S1 {self.s1}, S2 {s2}")
                     plt.show()
                     input('Do you want to keep going on?(y/Ctrl+c)')
             else:
@@ -721,6 +725,7 @@ def EP_params_from_ELVIRA_simulation(path,
                                      cell_type=None,
                                      output_path=None,
                                      debug=False,
+                                     rm_var=False,
                                      w=False):
 
     exp = SensElvExp()
@@ -745,7 +750,7 @@ def EP_params_from_ELVIRA_simulation(path,
 
     if comp_APD or comp_DI or seg_sig:
         exp.load_node_info()
-        exp.save_nodes_npy(rm_var=True)
+        exp.save_nodes_npy(rm_var=rm_var)
         exp.extract_S1S2()
         if comp_APD:
             exp.compute_APD_DI(save_csv=True, w=w)
@@ -854,6 +859,12 @@ if __name__ == '__main__':
                         dest='debug',
                         action='store_true',
                         help="""Run in debug mode. Which essentialy is showing some plots...""")
+
+    parser.add_argument('-r',
+                        '--rm-var',
+                        dest='rm_var',
+                        action='store_true',
+                        help="""Flag to remove var files after saving the corresponding npy file...""")
 
     parser.add_argument('path',
                         action='store',
