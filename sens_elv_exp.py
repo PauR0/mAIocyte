@@ -39,8 +39,9 @@ def compute_max_der_and_perc_repolarization(t, ap, perc=0.9, full_output=False, 
     apdq_t =  t[apdq_i]
 
     if show:
-        plt.plot(t, ap)
-        plt.plot([t_max_der, apdq_t], ap[[max_der, apdq_i]])
+        plt.plot(t, ap, 'k')
+        plt.plot([t_max_der, apdq_t], ap[[max_der, apdq_i]], 'r')
+        plt.axvspan(t_max_der, apdq_t, facecolor='r', alpha=0.3)
         plt.show()
 
     if full_output:
