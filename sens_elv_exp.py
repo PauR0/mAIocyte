@@ -810,6 +810,24 @@ if __name__ == '__main__':
                         action='store',
                         help="""Number of S1 stimuli before each S2.""")
 
+    parser.add_argument('-A',
+                        '--APD-DI',
+                        dest='A',
+                        action='store_true',
+                        help=""" Compute APD DI data and save it. """)
+
+    parser.add_argument('-C',
+                        '--CV-DI',
+                        dest='C',
+                        action='store_true',
+                        help=""" Compute CV DI data and save it. """)
+
+    parser.add_argument('-S',
+                        '--signal-seg',
+                        dest='sig_seg',
+                        action='store_true',
+                        help=""" Compute the signal segmentation and save it. """)
+
     parser.add_argument('-m',
                         '--myo',
                         dest='myo',
@@ -853,6 +871,9 @@ if __name__ == '__main__':
                                      s2_step=args.s2_step,
                                      s1_per_s2=args.s1_per_s2,
                                      tr_offset=args.tr_off,
+                                     comp_APD=args.A,
+                                     comp_DI=args.C,
+                                     seg_sig=args.sig_seg,
                                      cell_type=args.myo,
                                      output_path=args.otp_path,
                                      debug=args.debug,
