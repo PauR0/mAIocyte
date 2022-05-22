@@ -125,6 +125,13 @@ class NodeOutput:
         self.__AP : np.ndarray = None
         self.__time : np.ndarray = None
         self.__peaks : dict = None
+
+        #S1S2 segmentation
+        self.S1S2 : np.ndarray = None
+        self.S1S2_gids : np.ndarray = None
+        self.S2s : np.ndarray = None
+
+        # Threshold for the peak values
         self.max_minpeak_value = -65
         self.min_maxpeak_value = 0
 
