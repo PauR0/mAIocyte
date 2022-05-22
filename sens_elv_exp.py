@@ -216,13 +216,13 @@ class NodeOutput:
         self.peaks['min'] = np.array(mintab).T
     #
 
-    def plot(self, ax=None, show=False):
+    def plot(self, imin=0, imax=-1, ax=None, show=False):
 
         if ax is None:
             _, ax = plt.subplots()
-        ax.plot(self.time, self.AP, 'k', label='Action Potential')
-        ax.scatter(self.peaks['max'][0], self.peaks['max'][1], c='r', marker='*', label='Max Peaks')
-        ax.scatter(self.peaks['min'][0], self.peaks['min'][1], c='b', marker='*', label='Min Peaks')
+        ax.plot(self.time[imin:imax], self.AP[imin:imax], 'k', label='Action Potential')
+        ax.scatter(self.peaks['max'][0,imin:imax], self.peaks['max'][1,imin:imax], c='r', marker='*', label='Max Peaks')
+        ax.scatter(self.peaks['min'][0,imin:imax], self.peaks['min'][1,imin:imax], c='b', marker='*', label='Min Peaks')
         ax.set_title(self.id)
         if show:
             plt.show()
