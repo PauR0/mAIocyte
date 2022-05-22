@@ -123,7 +123,7 @@ class NodeOutput:
             self.id = i
         self.__AP : np.ndarray = None
         self.__time : np.ndarray = None
-        self.__peaks : np.ndarray = None
+        self.__peaks : dict = None
         self.max_minpeak_value = -65
         self.min_maxpeak_value = 0
 
