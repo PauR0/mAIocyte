@@ -138,7 +138,14 @@ def plot_data(data_df):
     plt.show()
 #
 
-def load_dataframes(path, ext='.csv'):
+def load_data(path, ext='csv'):
+
+    APD_data = load_APD_data(path=path, ext=ext)
+    CV_data = load_CV_data(path=path, ext=ext)
+
+    return APD_data, CV_data
+
+def load_APD_data(path, ext='csv'):
 
     df_dir = f'{path}/Rest_Curve_data'
 
@@ -151,13 +158,21 @@ def load_dataframes(path, ext='.csv'):
     APD_df = pd.DataFrame(columns=dfs[0].columns)
     APD_df = APD_df.append(dfs, ignore_index=True)
 
+    return APD_df
+
+def load_CV_data(path, ext='csv'):
+
+    df_dir = f'{path}/Rest_Curve_data'
+
+    df_names = [f for f in os.listdir(df_dir) if f.endswith(ext)]
+
     col_dtypes = {'S1':int, 'S2':int, 'DI_or':float , 'DI_dest':float, 'CV':float, 'cell_type':str, 'node_or':str, 'node_dest':str}
     CV_names = [f for f in df_names if f.startswith('DI_CV')]
     dfs = [pd.read_csv(f'{df_dir}/{name}', dtype=col_dtypes) for name in CV_names]
     CV_df = pd.DataFrame(columns=dfs[0].columns)
     CV_df = CV_df.append(dfs, ignore_index=True, )
 
-    return APD_df, CV_df
+    return CV_df
 #
 
 def make_APDR_curve(data, fname=None, debug=False, w=False):
@@ -233,7 +248,7 @@ def compute_restitution_curves(path=None, APD_df=None, CV_df=None, cell_type=Non
         return
 
     if path:
-        APD_df, CV_df = load_dataframes(path)
+        APD_df, CV_df = load_data(path)
 
     if path is not None and APD_df is not None:
         b='Sanas'
@@ -274,7 +289,7 @@ def make_CVR_surface(data, fname=None, debug=False, w=False):
 
 def compute_restitution_surfaces(path, cell_type=None, bz=False, w=False, debug=False):
 
-    APD_df, CV_df = load_dataframes(path)
+    APD_df, CV_df = load_data(path)
 
     make_APDR_surface(data=APD_df, debug=debug, w=w)
 
