@@ -138,47 +138,57 @@ def plot_data(data_df):
     plt.show()
 #
 
-def load_data(path, ext='csv'):
+def load_data(path, ext='csv', rebuild=False, w=False):
 
-    APD_data = load_APD_data(path=path, ext=ext)
-    CV_data = load_CV_data(path=path, ext=ext)
+    APD_data = load_APD_data(path=path, ext=ext, rebuild=rebuild, w=w)
+    CV_data  = load_CV_data(path=path, ext=ext)
 
     return APD_data, CV_data
 
-def load_APD_data(path, ext='csv'):
+def load_APD_data(path, ext='csv', rebuild=False, w=False):
 
-    df_dir = f'{path}/Rest_Curve_data'
-
-    df_names = [f for f in os.listdir(df_dir) if f.endswith(ext)]
-
-
-    APD_names = [f for f in df_names if f.startswith('APD_DI_APD+1')]
     col_dtypes = {'S1':int, 'S2':int, 'APD':float, 'DI':float , 'APD+1':float, 'cell_type':str, 'node_id':int}
-    dfs = [pd.read_csv(f'{df_dir}/{name}', dtype=col_dtypes) for name in APD_names]
-    APD_df = pd.DataFrame(columns=dfs[0].columns)
-    APD_df = APD_df.append(dfs, ignore_index=True)
 
-    return APD_df
+    APD_data = load_df_files(path, DS_fname='/APD_DS.csv',  col_dtypes=col_dtypes, key='APD_DI_APD+1', ext=ext)
 
-def load_CV_data(path, ext='csv'):
+    return APD_data
 
-    df_dir = f'{path}/Rest_Curve_data'
-
-    df_names = [f for f in os.listdir(df_dir) if f.endswith(ext)]
+def load_CV_data(path, ext='csv', rebuild=False, w=False):
 
     col_dtypes = {'S1':int, 'S2':int, 'DI_or':float , 'DI_dest':float, 'CV':float, 'cell_type':str, 'node_or':str, 'node_dest':str}
-    CV_names = [f for f in df_names if f.startswith('DI_CV')]
-    dfs = [pd.read_csv(f'{df_dir}/{name}', dtype=col_dtypes) for name in CV_names]
-    CV_df = pd.DataFrame(columns=dfs[0].columns)
-    CV_df = CV_df.append(dfs, ignore_index=True, )
 
-    return CV_df
+    CV_data = load_df_files(path, DS_fname='CV_DS.csv', col_dtypes=col_dtypes, key='DI_CV', ext=ext, w=w)
+
+    return CV_data
+#
+
+def load_df_files(path, DS_fname, col_dtypes, key, rebuild=False, ext='csv', abs_path=False, w=False):
+
+    df_dir = f'{path}/Rest_Curve_data'
+    if not abs_path:
+        DS_fname = f"{df_dir}/{DS_fname}"
+
+    if os.path.exists(DS_fname) and not rebuild:
+        df = pd.read_csv(DS_fname, dtype=col_dtypes)
+
+    else:
+        df_names = [f for f in os.listdir(df_dir) if f.startswith(key) and f.endswith(ext)]
+        dfs = [pd.read_csv(f'{df_dir}/{name}', dtype=col_dtypes) for name in df_names]
+        df  = pd.DataFrame(columns=dfs[0].columns)
+        df  = df.append(dfs, ignore_index=True)
+        if not os.path.exists(DS_fname) or w:
+            df.to_csv(DS_fname)
+        elif os.path.exists(DS_fname):
+            print(f"{DS_fname} wont be overwritten")
+
+    return df
 #
 
 def make_APDR_curve(data, fname=None, debug=False, w=False):
 
-    if os.path.exists(fname) and not w:
-        print(f"Warning {fname} already exists and overwitting option is set to False. Nothing will be saved....")
+    if fname:
+        if os.path.exists(fname) and not w:
+            print(f"Warning {fname} already exists and overwitting option is set to False. Nothing will be saved....")
 
     #Removing noise just in case .....
     #data = data.drop(data[(data.DI < 17) & (data['APD+1'] > 152)].index)
