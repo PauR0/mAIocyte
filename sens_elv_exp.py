@@ -374,7 +374,7 @@ class SensElvExp:
 
         var_files = [nf for nf in os.listdir(self.output_path) if nf.startswith('prc') and nf.endswith('.var')]
         for vf in var_files:
-            i = nf[ nf.rfind('_',)+1 :-4].lstrip('0')
+            i = vf[ vf.rfind('_',)+1 :-4].lstrip('0')
             if os.path.exists(f'node_{i}.npy'):
                 os.remove(f'{self.output_path}/{vf}')
             else:
