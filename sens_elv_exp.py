@@ -406,55 +406,59 @@ class SensElvExp:
         t_ini = t0 + (self.s1_per_s2-1) * self.s1
         t_end = t_ini + s2 + min(self.tr_offset * 0.75, 1000)
 
-        while cond(s2):
+        end=False
+        while cond(s2) and not end:
 
             #Get the min peak of the S1 before the S2
             mp_S1_i = np.abs(node.peaks['min'][0] - t_ini).argmin()
 
-            #t_ini is an underestimation of the activation, thus the peak should be after t_ini.
-            if node.peaks['min'][0, mp_S1_i] < t_ini:
-                mp_S1_i +=1
-
-            #We store the delay between the estimated activation and the peak
-            d = np.abs(node.peaks['min'][0, mp_S1_i] - t_ini)
-
-            mp_S1  = node.peaks['min'][:, mp_S1_i]
-
-            #We check the following min peak as it should be the S2.
-            if np.abs(node.peaks['min'][0, mp_S1_i] - node.peaks['min'][0, mp_S1_i+1]) < s2 * 1.2:
-                mp_S2_i = mp_S1_i+1
-                mp_S2  = node.peaks['min'][:, mp_S2_i]
-
-                #For the ending point we take the minimum between the following min peak's time and 1000 ms after the S2 min peak.
-                arr_aux = np.array([node.peaks['min'][0, mp_S2_i]+1000, node.peaks['min'][0, mp_S2_i+1]])
-                iaux = arr_aux.argmin()
-                if iaux == 0:
-                    jaux = np.abs(node.time-arr_aux[iaux]).argmin()
-                    END = np.array([node.time[jaux], node.AP[jaux]])
-                else:
-                    END = node.peaks['min'][:, mp_S2_i+1]
-
-                S1S2.append([mp_S1, mp_S2, END])
-                S2s.append(s2)
-
-                if self.debug:
-                    ids = (node.time > t0) & (node.time < min(t_end, END[0]))
-                    plt.plot(node.time[ids] - t0, node.AP[ids])
-                    plt.axvspan(t0 - t0, mp_S1[0] - t0, facecolor='b', alpha=0.3, label="Stimuli train")
-                    plt.axvspan(mp_S1[0]- t0, mp_S2[0] - t0, facecolor='y', alpha=0.3, label="S1")
-                    plt.axvspan(mp_S2[0]- t0, END[0]   - t0, facecolor='r', alpha=0.3, label="S2")
-                    plt.title(f"Node: {node_id} {self.cell_type} S1 {self.s1}, S2 {s2}")
-                    plt.show()
-                    input('Do you want to keep going on?(y/Ctrl+c)')
+            if mp_S1_i >= node.peaks['min'][0].shape[0]-2:
+                end=True
             else:
-                print(f"WARNING :: Node {node_id} cell type {self.cell_type}, s1 {self.s1}, s2 {s2}:\n",
-                      f"The S1 happens at {node.peaks['min'][0, mp_S1_i+1]}, the following minimum peak occurs at {node.peaks['min'][0, mp_S1_i+1]}. \n"
-                      f"It exceeds the limit (S2*1.2={s2*1.2:.2f}) that would be at {node.peaks['min'][0, mp_S1_i+1]+s2*1.2:.2f}")
+                #t_ini is an underestimation of the activation, thus the peak should be after t_ini.
+                if node.peaks['min'][0, mp_S1_i] < t_ini:
+                    mp_S1_i +=1
 
-            s2 += s2_step
-            t0 += self.s1_per_s2 * self.s1 + s2 + self.tr_offset + d
-            t_ini = t0 + (self.s1_per_s2-1) * self.s1
-            t_end = t_ini + s2 + min(self.tr_offset * 0.75, 1000)
+                #We store the delay between the estimated activation and the peak
+                d = np.abs(node.peaks['min'][0, mp_S1_i] - t_ini)
+
+                mp_S1  = node.peaks['min'][:, mp_S1_i]
+
+                #We check the following min peak as it should be the S2.
+                if np.abs(node.peaks['min'][0, mp_S1_i] - node.peaks['min'][0, mp_S1_i+1]) < s2 * 1.2:
+                    mp_S2_i = mp_S1_i+1
+                    mp_S2  = node.peaks['min'][:, mp_S2_i]
+
+                    #For the ending point we take the minimum between the following min peak's time and 1000 ms after the S2 min peak.
+                    arr_aux = np.array([node.peaks['min'][0, mp_S2_i]+1000, node.peaks['min'][0, mp_S2_i+1]])
+                    iaux = arr_aux.argmin()
+                    if iaux == 0:
+                        jaux = np.abs(node.time-arr_aux[iaux]).argmin()
+                        END = np.array([node.time[jaux], node.AP[jaux]])
+                    else:
+                        END = node.peaks['min'][:, mp_S2_i+1]
+
+                    S1S2.append([mp_S1, mp_S2, END])
+                    S2s.append(s2)
+
+                    if self.debug:
+                        ids = (node.time > t0) & (node.time < min(t_end, END[0]))
+                        plt.plot(node.time[ids] - t0, node.AP[ids])
+                        plt.axvspan(t0 - t0, mp_S1[0] - t0, facecolor='b', alpha=0.3, label="Stimuli train")
+                        plt.axvspan(mp_S1[0]- t0, mp_S2[0] - t0, facecolor='y', alpha=0.3, label="S1")
+                        plt.axvspan(mp_S2[0]- t0, END[0]   - t0, facecolor='r', alpha=0.3, label="S2")
+                        plt.title(f"Node: {node_id} {self.cell_type} S1 {self.s1}, S2 {s2}")
+                        plt.show()
+                        input('Do you want to keep going on?(y/Ctrl+c)')
+                else:
+                    print(f"WARNING :: Node {node_id} cell type {self.cell_type}, s1 {self.s1}, s2 {s2}:\n",
+                        f"The S1 happens at {node.peaks['min'][0, mp_S1_i]}, the following minimum peak occurs at {node.peaks['min'][0, mp_S1_i+1]}. \n"
+                        f"It exceeds the limit (S2*1.2={s2*1.2:.2f}) that would be at {node.peaks['min'][0, mp_S1_i+1]+s2*1.2:.2f}")
+
+                s2 += s2_step
+                t0 += self.s1_per_s2 * self.s1 + s2 + self.tr_offset + d
+                t_ini = t0 + (self.s1_per_s2-1) * self.s1
+                t_end = t_ini + s2 + min(self.tr_offset * 0.75, 1000)
 
         node.S1S2 = np.array(S1S2)
         node.S2s = np.array(S2s)
