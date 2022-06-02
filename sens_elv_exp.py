@@ -378,7 +378,7 @@ class SensElvExp:
             if os.path.exists(f'node_{i}.npy'):
                 os.remove(f'{self.output_path}/{vf}')
             else:
-                print("WARNING: {vf} won't be deleted as its npy version was not found...")
+                print(f"WARNING: {vf} won't be deleted as its npy version was not found...")
     #
 
     def extract_S1S2(self, node_id=None, extract_ids=True):
