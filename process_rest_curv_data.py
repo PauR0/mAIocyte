@@ -14,9 +14,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 def exp_(x, a, b, c):
-
     return a * (1 - b*np.exp(-x/c))
 
+def exp_2(x, a, b, c, d):
+    return a*np.exp(b*x)+ c*np.exp(d*x)
+    #return a*np.exp(b*(i*x-h))+c*np.exp(d*(i*x-h)) + g
+
+def poly_rat(x, a, b, c, d, h, k):
+    return (a* (x-k)**2+b) / (c*(x-k)+d) + h
 
 def griddata(x, y, z, binsize=0.01, retbin=True, retloc=True):
     """
