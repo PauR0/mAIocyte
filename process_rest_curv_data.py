@@ -146,23 +146,25 @@ def plot_data(data_df):
 def load_data(path, ext='csv', rebuild=False, w=False):
 
     APD_data = load_APD_data(path=path, ext=ext, rebuild=rebuild, w=w)
-    CV_data  = load_CV_data(path=path, ext=ext)
+    CV_data  = load_CV_data( path=path, ext=ext, rebuild=rebuild, w=w)
 
     return APD_data, CV_data
+#
 
 def load_APD_data(path, ext='csv', rebuild=False, w=False):
 
     col_dtypes = {'S1':int, 'S2':int, 'APD':float, 'DI':float , 'APD+1':float, 'cell_type':str, 'node_id':int}
 
-    APD_data = load_df_files(path, DS_fname='/APD_DS.csv',  col_dtypes=col_dtypes, key='APD_DI_APD+1', ext=ext)
+    APD_data = load_df_files(path, DS_fname='/APD_DS.csv',  col_dtypes=col_dtypes, key='APD_DI_APD+1', rebuild=rebuild, ext=ext)
 
     return APD_data
+#
 
 def load_CV_data(path, ext='csv', rebuild=False, w=False):
 
     col_dtypes = {'S1':int, 'S2':int, 'DI_or':float , 'DI_dest':float, 'CV':float, 'cell_type':str, 'node_or':str, 'node_dest':str}
 
-    CV_data = load_df_files(path, DS_fname='CV_DS.csv', col_dtypes=col_dtypes, key='DI_CV', ext=ext, w=w)
+    CV_data = load_df_files(path, DS_fname='CV_DS.csv', col_dtypes=col_dtypes, key='DI_CV', rebuild=rebuild,  ext=ext, w=w)
 
     return CV_data
 #
@@ -270,7 +272,7 @@ def compute_restitution_curves(path=None, APD_df=None, CV_df=None, cell_type=Non
         if bz:
             b='BZ'
         fname = f"{path}/Rest_Curve_data/RestitutionCurve_{b}_APD_{cell_type}.csv"
-        make_APDRC_file(APD_df, fname, debug=debug, w=w)
+        make_APDR_curve(APD_df, fname=fname, debug=debug, w=w)
 
     if path is not None and CV_df is not None:
         b='Sanas'
@@ -279,8 +281,8 @@ def compute_restitution_curves(path=None, APD_df=None, CV_df=None, cell_type=Non
             b='BZ'
             s*=0.25
         fname = f"{path}/Rest_Curve_data/RestitutionCurve_{b}_CV_{cell_type}.csv"
-        make_CVRC_file(CV_df, fname, debug=debug, s=s, w=w)
-
+        make_CVR_curve(CV_df, fname=fname, debug=debug, s=s, w=w)
+#
 
 def make_APDR_surface(data, fname=None, debug=False, w=False):
 
