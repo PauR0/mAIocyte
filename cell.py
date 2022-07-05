@@ -17,6 +17,15 @@ class RegresorBase:
     def predict_next_curve(self, fs):
         pass
     #
+
+    def predict(self, fs):
+
+        if fs.ndim < 1:
+            return np.array([self.predict_next_curve(x) for x in fs])
+
+        return np.array(self.predict_next_curve(fs))
+    #
+
 #
 
 class ActPotCurveBase:
