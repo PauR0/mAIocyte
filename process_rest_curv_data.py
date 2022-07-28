@@ -147,7 +147,7 @@ def plot_data(data_df):
 def load_data(path, ext='csv', rebuild=False, w=False):
 
     APD_data = load_APD_data(path=path, ext=ext, rebuild=rebuild, w=w)
-    CV_data  = load_CV_data( path=path, ext=ext, rebuild=rebuild, w=w)
+    CV_data  = load_CV_data (path=path, ext=ext, rebuild=rebuild, w=w)
 
     return APD_data, CV_data
 #
@@ -339,6 +339,11 @@ def make_APDR_surface(data, fname=None, debug=False, w=False):
 
         save_arr = save_arr.astype(str)
         np.savetxt(fname, save_arr, fmt="\"%s\"", delimiter=',')
+
+        params_fname = fname[:-4] + '_params.csv'
+        with open(params_fname, 'w') as fpar:
+            fpar.write(", ".join([f"\"{k}\"" for k in abc]) + "\n")
+            fpar.write(f"\"{linreg.slope}\" \"{linreg.intercept}\"")
 #
 
 def make_CVR_surface(data, fname=None, debug=False, w=False):
