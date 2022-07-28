@@ -31,6 +31,23 @@ class Probe:
         self.t_delta : float = None
     #
 
+    def __str__(self):
+
+        nt = 0
+        if self.EG is not None:
+            nt = len(self.EF)
+
+        return F"""Probe: {self.name}:
+                        props:
+                            location: {self.loc}
+                            Time instants computed: {nt}
+
+                        Time parameters:
+                            t_ini = {self.t_ini}
+                            t_end = {self.t_end}
+                            t_delta = {self.t_delta}
+                """
+
     def compute_distance_vectors(self, mesh, normalize=False):
 
         self.d = mesh.points - self.loc
