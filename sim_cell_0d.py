@@ -27,22 +27,25 @@ def load_curve_pickles(cell_type):
 
     if cell_type == 'ttepi':
         curve_ds_path = EPI_HD_PATH
-        curve_fv_path = EPI_P8_PATH
+        curve_fv_path = EPI_P80_PATH
     elif cell_type == 'ttendo':
         curve_ds_path = ENDO_HD_PATH
-        curve_fv_path = ENDO_P8_PATH
+        curve_fv_path = ENDO_P80_PATH
     elif cell_type == 'ttmid':
         curve_ds_path = MID_HD_PATH
-        curve_fv_path = MID_P8_PATH
-    elif cell_type == 'ttepi_bz':
+        curve_fv_path = MID_P80_PATH
+    elif cell_type == 'ttepibz':
         curve_ds_path = EPI_BZ_HD_PATH
-        curve_fv_path = EPI_BZ_P8_PATH
-    elif cell_type == 'ttendo_bz':
+        curve_fv_path = EPI_BZ_P80_PATH
+    elif cell_type == 'ttendobz':
         curve_ds_path = ENDO_BZ_HD_PATH
-        curve_fv_path = ENDO_BZ_P8_PATH
-    elif cell_type == 'ttmid_bz':
+        curve_fv_path = ENDO_BZ_P80_PATH
+    elif cell_type == 'ttmidbz':
         curve_ds_path = MID_BZ_HD_PATH
-        curve_fv_path = MID_BZ_P8_PATH
+        curve_fv_path = MID_BZ_P80_PATH
+    else:
+        print(f"Given cell_type arg not recognized ({cell_type}) , it must be in {{ttendo, ttmid, ttepi, ttendobz, ttmidbz, ttepibz}} ")
+        return None, None
 
     print("Loading Cell DS from: ", curve_ds_path)
     curve_ds  = pd.read_pickle(curve_ds_path)
@@ -217,11 +220,9 @@ def exec_cell_0D_simulation(cell_type,
                             ext=500,
                             dbg=False):
 
-    sim = Simulation0D()
+    sim = CellSim(cell_type=cell_type, CL0=cl0)
     sim.debug=dbg
-    sim.cell_type = cell_type
     sim.build_cell()
-    sim.CL0       = cl0
 
     #Time(ms) parameters
     sim.t_ini      = t_ini
