@@ -53,9 +53,6 @@ class Probe:
         self.d = mesh.points - self.loc
         self.d3 = np.power(np.linalg.norm(self.d, axis=1), 2/3)
         self.Mr = (self.d.T * 1 / self.d3).T
-        print("shape d", self.d.shape)
-        print("shape d3", self.d3.shape)
-        print("shape Mr", self.Mr.shape)
     #
 
     def compute_EG(self, mesh):
