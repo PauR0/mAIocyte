@@ -51,7 +51,7 @@ class Probe:
     def compute_distance_vectors(self, mesh, normalize=False):
 
         self.d = mesh.points - self.loc
-        self.d3 = np.linalg.norm(self.d, axis=1).pow(2/3)
+        self.d3 = np.power(np.linalg.norm(self.d, axis=1), 2/3)
         self.Mr = (self.d.T * 1 / self.d3).T
         print("shape d", self.d.shape)
         print("shape d3", self.d3.shape)
