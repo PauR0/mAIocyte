@@ -33,6 +33,7 @@ def check_s2_params(s2_ini, s2_end, s2_step):
             s2_step *= -1
 
     return s2_step, cond
+#
 
 def check_attrs(obj, attr_names, err_message=None):
     """Check if given obj has the attributes in
