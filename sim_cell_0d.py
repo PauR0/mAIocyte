@@ -64,7 +64,7 @@ def prepare_curve_ds(curve_ds):
     curves_DS = np.array(curve_ds['AP+1'].tolist())
     return curves_DS, t_delta
 
-class Simulation0D:
+class CellSim:
 
     def __init__(self, restart_cell=False):
 

@@ -6,7 +6,7 @@ from vtk import VTK_HEXAHEDRON
 import matplotlib.pyplot as plt
 
 
-from sim_cell_0d import Simulation0D
+from sim_cell_0d import CellSim
 
 
 def geom_from_elvira_case(case_dir):
@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
 
     print("Cell: ",all_act_times.loc[0,'cell_type'])
-    sim = Simulation0D()
+    sim = CellSim()
     sim.debug=False
 
     aux={}
