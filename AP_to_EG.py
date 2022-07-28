@@ -90,7 +90,7 @@ class Probe:
 
         if show:
             plt.show()
-
+    #
 
 
 def load_data_from_path(path, ap_params=None):
@@ -237,7 +237,7 @@ def AP_to_EG(path, mesh, AP, ap_params, eg_params, debug=False, w=False):
     for i in trange(t_ini_ig, t_end_ig):
         mesh_filt['AP'] = AP[ids,i]
         mesh_filt = mesh_filt.compute_derivative(scalars='AP', gradient='AP_grad')
-        for probe in probes:
+        for _, probe in probes.items():
             probe.compute_EG(mesh_filt)
 
         if debug:
