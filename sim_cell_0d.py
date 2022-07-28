@@ -66,14 +66,14 @@ def prepare_curve_ds(curve_ds):
 
 class CellSim:
 
-    def __init__(self, restart_cell=False):
+    def __init__(self, cell_type=None, CL0=600):
 
         self.id = None
         self.debug = False
 
         self.cell      : Cell   = None
-        self.cell_type : str    = None #{'ttepi', 'ttendo', 'ttmid', 'ttepi_bz', 'ttendo_bz', 'ttmid_bz'}
-        self.CL0       : float  = 800  #The cycle length of the initial state of the myocyte expressed in ms
+        self.cell_type : str    = cell_type #{'ttepi', 'ttendo', 'ttmid', 'ttepibz', 'ttendobz', 'ttmidbz'}
+        self.CL0       : float  = CL0  #The cycle length of the initial state of the myocyte expressed in ms
 
         #Time(ms) parameters
         self.t_ini : float = 0
@@ -93,9 +93,9 @@ class CellSim:
     def restart(self, reload_pickles=True):
 
         if reload_pickles:
-            self.cell      : Cell   = None
-            self.cell_type : str    = None #{'ttepi', 'ttendo', 'ttmid', 'ttepi_bz', 'ttendo_bz', 'ttmid_bz'}
-            self.CL0       : float  = 800  #The cycle length of the initial state of the myocyte expressed in ms
+            self.cell        = None
+            self.cell_type   = None
+            self.CL0         = 600
         else:
             self.cell.restart()
             self.set_cell_initial_state()
@@ -210,7 +210,7 @@ class CellSim:
 
 def exec_cell_0D_simulation(cell_type,
                             act_t_fname,
-                            cl0=800,
+                            cl0=600,
                             t_ini=0,
                             dt=0.1,
                             t_end=None,
