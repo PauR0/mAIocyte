@@ -63,7 +63,7 @@ class Probe:
         ----------
             mesh : pv.PolyData
                 The mesh used to build the distances but with a vector field
-                defined at each point, called 'grad_AP' containing the gradient
+                defined at each point, called 'AP_grad' containing the gradient
                 of the Action Potential.
 
         \Phi_e(r_e, t) = - 1/(4\pi\sigma_e) ∫\sigma(r) nablaV_m(r_jT) \gamma_d/r_d^3 dr
@@ -77,7 +77,8 @@ class Probe:
         if self.EG is None:
             self.EG = []
 
-        self.EG.append((self.Mr * mesh['grad_AP']).sum())
+        self.EG.append((self.Mr * mesh['AP_grad']).sum())
+    #
 
     def plot(self, ax=None, show=False):
 
