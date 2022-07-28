@@ -139,7 +139,7 @@ def get_global_id(ap_params, t):
     return gid
 #
 
-def build_probes(eg_params, mesh, normalize=False):
+def build_probes(eg_params, mesh, t_delta=1.0, normalize=False):
 
     probes = {}
 
@@ -150,7 +150,7 @@ def build_probes(eg_params, mesh, normalize=False):
         probes[name] = p
         p.t_ini = eg_params['data']['t_ini']
         p.t_end = eg_params['data']['t_end']
-        p.t_delta = eg_params['data']['t_delta']
+        p.t_delta = t_delta
 
     return probes
 #
@@ -232,7 +232,7 @@ def AP_to_EG(path, mesh, AP, ap_params, eg_params, debug=False, w=False):
 
     mesh_filt, ids = remove_core_from_mesh(mesh=mesh)
 
-    probes = build_probes(eg_params=eg_params, mesh=mesh_filt, normalize=False)
+    probes = build_probes(eg_params=eg_params, mesh=mesh_filt, t_delta=ap_params['data']['t_delta'], normalize=False)
 
     for i in trange(t_ini_ig, t_end_ig):
         mesh_filt['AP'] = AP[ids,i]
