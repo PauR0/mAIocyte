@@ -1,0 +1,10 @@
+numpy
+scipy
+matplotlib
+pyvista
+vtk
+pandas
+scikit-learn
+seaborn
+tqdm
+mat4py
