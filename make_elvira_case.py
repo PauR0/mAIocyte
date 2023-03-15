@@ -18,8 +18,7 @@ from utils import check_s2_params
 FILE_DIR = sys.path[0]
 if not FILE_DIR:
     FILE_DIR='.'
-#TEMP_PATH = FILE_DIR+'/BLOQUE_12x12_250micras'
-TEMP_PATH = FILE_DIR+'/Long_Slab_300x20000x250_micrometros'
+TEMP_PATH = FILE_DIR+"/case"
 
 
 def make_stimulus_file(path,
