@@ -78,7 +78,7 @@ def make_stimulus_file(path,
     return os.path.split(fname)[1], t
 #
 
-def make_fibre_file(path, myo, bz, w=False):
+def make_fibre_file(path, myo, w=False):
     """
     Create the fibre file according to the element properties and cell models defined at PROP_NOD (main).
 
@@ -90,9 +90,6 @@ def make_fibre_file(path, myo, bz, w=False):
         myo  : int
             Cell model expressed in the PROP_NOD
 
-        bz : bool
-            Not used
-
         w : bool
             Wether to overwrite
     """
@@ -102,12 +99,22 @@ def make_fibre_file(path, myo, bz, w=False):
     if os.path.exists(fibre_fname) and not w:
         print(f"WARNING: file {fibre_fname} already exists and overwite is set to false...")
 
-    if myo in [2,3,4]:
+    if myo.lower() in ['ttendo', 'ttmid', 'ttepi']:
         material = 8
-    elif myo in [5,6,7]:
+    elif myo.lower() in ['ttendobz','ttmidbz','ttepibz']:
         material = 9
-    elif myo == 8:
+    elif myo.lower() == 'CM':
         material = 2
+    else:
+        print("ERROR: myo arg could not be understood. Available values are: \n",
+              "CM : Courtemanche "
+              "ttendo : tenTusscher ENDO,\n",
+              "ttmid : tenTusscher MID,\n",
+              "ttepi : tenTusscher EPI, \n"
+              "ttendobz : tenTusscher ENDO BZ,\n",
+              "ttmidbz : tenTusscher MID BZ,\n",
+              "ttepibz : tenTusscher EPI BZ")
+        return
 
     with open(fibre_fname, 'r') as fr:
         lines = fr.readlines()
