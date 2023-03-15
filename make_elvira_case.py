@@ -126,20 +126,26 @@ def make_fibre_file(path, myo, w=False):
             fw.write(l)
 #
 
-def make_node_file(path, myo, bz, w=False):
+def make_node_file(path, myo, w=False):
 
     nodes_fname = path+'/data/nodes.dat'
     if os.path.exists(nodes_fname) and not w:
         print(f"WARNING: file {nodes_fname} already exists and overwite is set to false...")
 
     if myo == 'CM':
-        myo = 1
+        myo_num = 1
     elif myo == 'ttendo':
-        myo = 2
+        myo_num = 2
     elif myo == 'ttmid':
-        myo = 3
+        myo_num = 3
     elif myo.lower() == 'ttepi':
-        myo = 4
+        myo_num = 4
+    elif myo == 'ttendobz':
+        myo_num = 5
+    elif myo == 'ttmidbz':
+        myo_num = 6
+    elif myo.lower() == 'ttepibz':
+        myo_num = 7
     else:
         print("ERROR: myo arg could not be understood. Available values are: \n",
              "CM : Courtemanche "
@@ -147,8 +153,6 @@ def make_node_file(path, myo, bz, w=False):
              "ttmid : tenTusscher MID,\n",
              "ttepi : tenTusscher EPI")
         return
-    if bz:
-        myo+=3
 
     if myo != 1:
         #Read lines
@@ -157,9 +161,9 @@ def make_node_file(path, myo, bz, w=False):
         with open(nodes_fname, 'w') as fw:
             for i, l in enumerate(lines):
                 if i > 1:
-                    l = re.sub('\s+1\s+', f'\t{myo}\t', l, count=1)
+                    l = re.sub('\s+1\s+', f'\t{myo_num}\t', l, count=1)
                 fw.write(l)
-        make_fibre_file(path, myo, bz, w=w)
+        make_fibre_file(path, myo, w=w)
 #
 
 def make_output_dir(path, s1, s2_step, w=False):
@@ -260,7 +264,6 @@ def make_case(path,
               myo=None,
               dt=None,
               in_path=False,
-              bz=False,
               run=False,
               wait=False,
               run_post=False,
@@ -292,8 +295,8 @@ def make_case(path,
                                                current=current,
                                                w=w)
 
-    if (myo is not None or bz) and not in_path:
-        make_node_file(path, myo, bz, w=w)
+    if myo is not None and not in_path:
+        make_node_file(path, myo, w=w)
 
     output_dname = make_output_dir(path, s1, s2_step, w=w)
 
@@ -392,12 +395,6 @@ if __name__ == '__main__':
                         type=str,
                         help="""Flag to specify if ttepi - ttmid - ttendo. Default ttendo.""")
 
-    parser.add_argument('-b',
-                        '--border-zone',
-                        dest='bz',
-                        action='store_true',
-                        help="""Set the node type to Border Zone.""")
-
     parser.add_argument('-r',
                         '--run-elv',
                         dest='r',
@@ -475,7 +472,6 @@ if __name__ == '__main__':
               myo=args.myo,
               dt=args.dt,
               in_path=args.in_path,
-              bz=args.bz,
               run=args.r,
               wait=args.wait,
               run_post=args.o,
