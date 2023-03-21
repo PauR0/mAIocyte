@@ -29,11 +29,11 @@ set_act_alias() {
             case $SHELL in
 
                 "/bin/zsh")
-                    echo "alias act_$1='$SCRIPTPATH/$1/bin/activate'" >> "$HOME/.zshrc"
+                    echo "\n alias act_$1='source $SCRIPTPATH/$1/bin/activate'" >> "$HOME/.zshrc"
                     ;;
 
                 "/bin/bash")
-                    echo "alias act_$1='$SCRIPTPATH/$1/bin/activate'" >> "$HOME/.bashrc"
+                    echo "\n alias act_$1='source $SCRIPTPATH/$1/bin/activate'" >> "$HOME/.bashrc"
                     ;;
 
                 *)
