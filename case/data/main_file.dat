@@ -7,15 +7,18 @@
 #MATERIAL, FILE:"materials.dat"  !Conductividades normalizadas (S/(cm*pF))
 !-------------------------------------------------------------------------------
 #PROP_NOD  !Modelo electrico
-8
-1 1 1 0 23 !Coutermanche
-2 8 1 0 1 !TT ENDO SANO
-3 8 1 0 2  !TT MID SANO
-4 8 1 0 3 !TT EPI SANO
-5 9 1 0 51  !TT ENDO BZ
-6 9 1 0 52  !TT MID BZ
-7 9 1 0 53  !TT EPI BZ
-8 2 1 0 18  !McCanell Fibroblast
+11
+1   1 1 0 23 !Courtemanche
+2   8 1 0 1  !TT ENDO SANO
+3   8 1 0 2  !TT MID SANO
+4   8 1 0 3  !TT EPI SANO
+5   9 1 0 51 !TT ENDO BZ
+6   9 1 0 52 !TT MID BZ
+7   9 1 0 53 !TT EPI BZ
+8   2 1 0 18 !McCanell Fibroblast
+9  10 1 0 20 !ORd Endo
+10 10 1 0 21 !ORd Mid
+11 10 1 0 22 !ORd Epi
 !-------------------------------------------------------------------------------
 #PROP_ELEM, FILE:"fibre.dat"  !Direccion de fibras
 !-------------------------------------------------------------------------------
