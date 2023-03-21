@@ -15,10 +15,20 @@ from shutil import rmtree
 from utils import check_s2_params
 
 
+
+#Template priority is os.environ > venv template_case > template located where this file is.
 FILE_DIR = sys.path[0]
 if not FILE_DIR:
     FILE_DIR='.'
 TEMP_PATH = FILE_DIR+"/case"
+if 'SC_TEMP_CASE' in os.environ:
+    print("[make_elvira_case] Using template case in "+os.environ['SC_TEMP_CASE'])
+    TEMP_PATH = os.environ['CENTERLINE_TEMPLATE_CASE']
+elif not (sys.prefix == sys.base_prefix): #Determine if running inside a venv
+        venv_temp_case_path = f"{sys.prefix}/share/template_case"
+        if os.path.exists(venv_temp_case_path) and os.path.isdir(venv_temp_case_path):
+            print(f"[make_elvira_case] Using template case in {venv_temp_case_path}")
+            TEMP_PATH = venv_temp_case_path
 
 
 def make_stimulus_file(path,
