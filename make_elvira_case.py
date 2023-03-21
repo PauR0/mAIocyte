@@ -2,6 +2,8 @@
 
 import os, sys
 
+from datetime import datetime
+
 import re
 
 import argparse
@@ -14,6 +16,9 @@ from shutil import rmtree
 
 from utils import check_s2_params
 
+from param_utils import (read_case_json, write_case_json,
+                         read_stimuli_json, write_stimuli_json,
+                         update_params)
 
 
 #Template priority is os.environ > venv template_case > template located where this file is.
@@ -31,20 +36,76 @@ elif not (sys.prefix == sys.base_prefix): #Determine if running inside a venv
             TEMP_PATH = venv_temp_case_path
 
 
-def make_stimulus_file(path,
-                       s1,
-                       s2_ini=None,
-                       s2_end=250,
-                       s2_step=20,
-                       s1_per_s2=9,
-                       train_offset=0,
-                       st_duration=2.0,
-                       current=100.0,
-                       abs_path=False,
-                       w=False):
+def make_case_id(path, stim_params):
+    """
+    Provides an id for a case and its files
+    """
 
-    if not abs_path:
-        fname = f"{path}/data/file_stimulus_{s1}_{s2_step}.dat"
+    if stim_params['method'] == 'S1S2':
+        cid =f"{stim_params['s1']}_{stim_params['s2_step']}"
+
+    else:
+        cid = datetime.now().strftime("%H:%M:%S_%d-%m%Y")
+
+    return cid
+#
+
+def make_S1S2_stimulus_file(path,
+                            case_id,
+                            s1,
+                            s2_ini=None,
+                            s2_end=250,
+                            s2_step=20,
+                            s1_per_s2=9,
+                            train_offset=0,
+                            st_duration=2.0,
+                            current=100.0,
+                            w=False,
+                            **kwargs):
+
+    """
+    Function to make S1S2 stimuli file for ELVIRA case.
+    It starts with a train of s1_per_s2 stimuli at s1 CL
+    followed by an s2 stimulus. This is repeated varying the
+    value of s2 according to a linear progrssion from s2_ini
+    to s2_end with steps of s2_step. An offset between S1S2
+    trains can be added using train_offset.
+
+    The sign of s2_step is checked to be conistent with s2_ini
+    and s2_end.
+
+    Arguments:
+    ----------
+
+        s1 : float
+            The S1 or basic cycle length expressed in ms.
+
+        s2_ini : float
+            The first s2 value expressed in ms.
+
+        s2_end : float
+            The last s2 value expressed in ms.
+
+        s2_step : float
+            The step to transite from s2_ini to s2_end expressed in ms.
+
+        s1_per_s2 : int
+            The number of s1 to perform at each S1S2 trains.
+
+        train_offset : float
+            An offset to be added at the end of an S1S2 train expressed in ms.
+
+        st_duration : float
+            The duration of the stimuli in ms.
+
+        current : float
+            The current to impose at the stimuli line in mV.
+
+
+    """
+
+
+    fname = f"{path}/data/file_stimulus_{case_id}.dat"
     if os.path.exists(fname) and not w:
         print(f"ERROR: file {fname} already exists and overwite is set to false...")
         return False, False
@@ -85,7 +146,23 @@ def make_stimulus_file(path,
                 l = stim_line
             f_stim.write(l)
 
-    return os.path.split(fname)[1], t
+    return t
+#
+
+def make_stimulus_file(path, case_id, params, w=False):
+    """
+    TODO: Make other stimuli methods.
+    """
+
+    t_max = 0
+
+    if params['method'] == 'S1S2':
+        t_max = make_S1S2_stimulus_file(path, case_id=case_id, **params, w=w)
+
+    else:
+        print("ERROR: Only S1S2 method is supported currently....")
+
+    return t_max
 #
 
 def make_fibre_file(path, myo, w=False):
@@ -113,17 +190,22 @@ def make_fibre_file(path, myo, w=False):
         material = 8
     elif myo.lower() in ['ttendobz','ttmidbz','ttepibz']:
         material = 9
+    elif myo.lower() in ['ordendo', 'ordmid', 'ordepi']:
+        material = 10
     elif myo.lower() == 'CM':
         material = 2
     else:
         print("ERROR: myo arg could not be understood. Available values are: \n",
-              "CM : Courtemanche "
-              "ttendo : tenTusscher ENDO,\n",
-              "ttmid : tenTusscher MID,\n",
-              "ttepi : tenTusscher EPI, \n"
-              "ttendobz : tenTusscher ENDO BZ,\n",
-              "ttmidbz : tenTusscher MID BZ,\n",
-              "ttepibz : tenTusscher EPI BZ")
+              "\t CM       : Courtemanche "
+              "\t ttendo   : tenTusscher ENDO,\n",
+              "\t ttmid    : tenTusscher MID,\n",
+              "\t ttepi    : tenTusscher EPI, \n"
+              "\t ttendobz : tenTusscher ENDO BZ,\n",
+              "\t ttmidbz  : tenTusscher MID BZ,\n",
+              "\t ttepibz  : tenTusscher EPI BZ",
+              "\t ordendo  : O'Hara Rudy ENDO\n",
+              "\t ordmid   : O'Hara Rudy MID\n",
+              "\t ordepi   : O'Hara Rudy EPI\n")
         return
 
     with open(fibre_fname, 'r') as fr:
@@ -156,12 +238,25 @@ def make_node_file(path, myo, w=False):
         myo_num = 6
     elif myo.lower() == 'ttepibz':
         myo_num = 7
+    elif myo.lower() == 'ordendo':
+        myo_num = 9
+    elif myo.lower() == 'ordmid':
+        myo_num = 10
+    elif myo.lower() == 'ordepi':
+        myo_num = 11
+
     else:
         print("ERROR: myo arg could not be understood. Available values are: \n",
-             "CM : Courtemanche "
-             "ttendo : tenTusscher ENDO,\n",
-             "ttmid : tenTusscher MID,\n",
-             "ttepi : tenTusscher EPI")
+              "\t CM       : Courtemanche "
+              "\t ttendo   : Ten Tusscher ENDO,\n",
+              "\t ttmid    : Ten Tusscher MID,\n",
+              "\t ttepi    : Ten Tusscher EPI, \n"
+              "\t ttendobz : Ten Tusscher ENDO BZ,\n",
+              "\t ttmidbz  : Ten Tusscher MID BZ,\n",
+              "\t ttepibz  : Ten Tusscher EPI BZ\n",
+              "\t ordendo  : O'Hara Rudy ENDO\n",
+              "\t ordmid   : O'Hara Rudy MID\n",
+              "\t ordepi   : O'Hara Rudy EPI\n")
         return
 
     if myo != 1:
@@ -176,9 +271,9 @@ def make_node_file(path, myo, w=False):
         make_fibre_file(path, myo, w=w)
 #
 
-def make_output_dir(path, s1, s2_step, w=False):
+def make_output_dir(path, case_id, w=False):
 
-    dname = f"{path}/output_{s1}_{s2_step}"
+    dname = f"{path}/output_{case_id}"
 
     if os.path.exists(dname) and not w:
         print(f"ERROR: directory {dname} already exists and overwritting is set to false....")
@@ -191,10 +286,10 @@ def make_output_dir(path, s1, s2_step, w=False):
     return dname
 #
 
-def make_main_file(path, s1, s2_step, sti_fname, t_max, dt):
+def make_main_file(path, case_id, t_max, dt):
 
 
-    main_fname = f'{path}/data/main_{s1}_{s2_step}.dat'
+    main_fname = f'{path}/data/main_{case_id}.dat'
 
     #Read template lines
     with open(f"{TEMP_PATH}/data/main_file.dat", 'r') as ftemp:
@@ -215,10 +310,10 @@ def make_main_file(path, s1, s2_step, sti_fname, t_max, dt):
 
             if '#TITLE' in line:
                 edit_next = True
-                new_line = f'Slab3D_{s1}_{s2_step}\n'
+                new_line = f'Slab3D_{case_id}\n'
 
             if '*STIMULUS' in line:
-                line = f'*STIMULUS, FILE:"{sti_fname}"\n'
+                line = f'*STIMULUS, FILE:file_stimulus_{case_id}.dat\n'
 
             fmain.write(line)
 
@@ -264,20 +359,14 @@ def make_run_post_config_file(path, ncores, s1, s2_step, ftype=1):
 #
 
 def make_case(path,
-              s1,
-              s2_ini=None,
-              s2_end=250,
-              s2_step=-20,
-              s1_per_s2=9,
-              train_offset=0,
-              current=100.0,
-              myo=None,
-              dt=None,
+              myo,
+              dt,
+              stim_params,
               in_path=False,
               run=False,
               wait=False,
               run_post=False,
-              n_cores=6,
+              n_cores=None,
               w=False):
 
     if in_path:
@@ -294,26 +383,21 @@ def make_case(path,
                 os.remove(path+f)
             w = True
 
-    stimulus_fname, t_max = make_stimulus_file(path=path,
-                                               s1=s1,
-                                               s2_ini=s2_ini,
-                                               s2_end=s2_end,
-                                               s2_step=s2_step,
-                                               s1_per_s2=s1_per_s2,
-                                               train_offset=train_offset,
-                                               st_duration=2,
-                                               current=current,
-                                               w=w)
+
+    cid = make_case_id(path=path, stim_params=stim_params)
+
+    t_max = make_stimulus_file(path=path,
+                               case_id=cid,
+                               params=stim_params,
+                               w=w)
 
     if myo is not None and not in_path:
         make_node_file(path, myo, w=w)
 
-    output_dname = make_output_dir(path, s1, s2_step, w=w)
+    output_dname = make_output_dir(path, case_id=cid, w=w)
 
     main_file_fname = make_main_file(path=path,
-                                     s1=s1,
-                                     s2_step=s2_step,
-                                     sti_fname=stimulus_fname,
+                                     case_id=cid,
                                      t_max=t_max,
                                      dt=dt)
 
@@ -327,6 +411,8 @@ def make_case(path,
         post_config_fname = make_run_post_config_file(path, n_cores, s1, s2_step)
         exec_command = FILE_DIR + f"/runpost.sh {post_config_fname} {output_dname} &"
         spro = Popen(exec_command)
+
+    return cid
 #
 
 
@@ -336,64 +422,29 @@ if __name__ == '__main__':
                                     cases, using a template case.""",
                                     usage = """ """)
 
-    parser.add_argument('-s',
-                        '--s1',
-                        dest='s1',
-                        action='store',
-                        default=1000,
-                        type=int,
-                        help="""Lapse of time between main consecutive stimuli
-                        expressed in ms.""")
-
-    parser.add_argument('-p',
-                        '--s2-step',
-                        dest='s2_step',
-                        default=20,
-                        action='store',
-                        type=int,
-                        help="""Lapse of time between the 10th S1 and the S2 stimuli
-                        expressed in ms.""")
-
-    parser.add_argument('--s2-end',
-                        dest='s2_end',
-                        default=250,
-                        action='store',
-                        type=float,
-                        help="""Last reached value of S2.""")
-
-    parser.add_argument('--s2-ini',
-                        dest='s2_ini',
-                        type=float,
-                        default=None,
-                        action='store',
-                        help="""Initial S2 for the stimuli train.""")
-
-    parser.add_argument('--tr-off',
-                        dest='tr_off',
-                        type=float,
-                        default=0,
-                        action='store',
-                        help="""An extra offset time at the end of each stimuli train.""")
-
     parser.add_argument('-c',
-                        '--current',
-                        dest='current',
-                        type=int,
-                        default=100,
+                        '--case-params',
+                        dest='case_params',
                         action='store',
-                        help="""Current amplitude of the stimulus.""")
+                        default=None,
+                        type=str,
+                        nargs='?',
+                        help="""Path to an case_params.json.""")
 
-    parser.add_argument('--s1-per-s2',
-                        dest='s1_per_s2',
-                        type=int,
-                        default=9,
+    parser.add_argument('-s',
+                        '--stim-params',
+                        '--stimuli-params',
+                        dest='stim_params',
                         action='store',
-                        help="""Number of S1 stimuli before each S2.""")
+                        default=None,
+                        type=str,
+                        nargs='?',
+                        help="""Path to an stimuli_params.json.""")
 
     parser.add_argument('-t',
                         '--dt',
                         dest='dt',
-                        default='0.02',
+                        default=None,
                         type=str,
                         help="""Time differential - to be chosen appropriately considering
                         the model used (eg. CM 0.01, tenTusscher 0.02).""")
@@ -401,19 +452,19 @@ if __name__ == '__main__':
     parser.add_argument('-m',
                         '--myo',
                         dest='myo',
-                        default='ttendo',
+                        default=None,
                         type=str,
                         help="""Flag to specify if ttepi - ttmid - ttendo. Default ttendo.""")
 
     parser.add_argument('-r',
                         '--run-elv',
-                        dest='r',
+                        dest='run_elv',
                         action='store_true',
                         help="""Run ELVIRA on the generated case.""")
 
     parser.add_argument('-o',
                         '--run-post',
-                        dest='o',
+                        dest='run_post',
                         action='store_true',
                         help="""Make ensight files after the simulation.""")
 
@@ -428,7 +479,7 @@ if __name__ == '__main__':
                         '--in-path',
                         dest='in_path',
                         action='store_true',
-                        help=""" Save files in an already existing case.""")
+                        help="""Save files in an already existing case.""")
 
     parser.add_argument('--wait',
                         dest='wait',
@@ -444,7 +495,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-n',
                         '--n-cores',
-                        dest='nc',
+                        dest='n_cores',
                         default=8,
                         action='store',
                         type=int,
@@ -471,19 +522,34 @@ if __name__ == '__main__':
         print("ERROR: Wrong path given ....")
         sys.exit()
 
-    make_case(path=args.path,
-              s1=args.s1,
-              s2_ini=args.s2_ini,
-              s2_end=args.s2_end,
-              s2_step=args.s2_step,
-              s1_per_s2=args.s1_per_s2,
-              train_offset=args.tr_off,
-              current=args.current,
-              myo=args.myo,
-              dt=args.dt,
-              in_path=args.in_path,
-              run=args.r,
-              wait=args.wait,
-              run_post=args.o,
-              n_cores=args.nc,
-              w=args.w)
+    if args.case_params is not None:
+        case_params = read_case_json(path=args.case_params, abs_path=True)
+    else:
+        case_params = read_case_json(path=args.case_params)
+    case_params = update_params(params   = case_params,
+                                myo      = args.myo,
+                                dt       = args.dt,
+                                run_elv  = args.run_elv,
+                                run_post = args.run_post,
+                                in_path  = args.in_path,
+                                n_cores  = args.n_cores)
+
+    if args.stim_params is not None:
+        stim_params = read_stimuli_json(path=args.case_params, abs_path=True)
+    else:
+        stim_params = read_stimuli_json(path=args.case_params)
+
+
+    cid = make_case(path        = args.path,
+                    myo         = case_params['data']['myo'],
+                    dt          = case_params['data']['dt'],
+                    stim_params = stim_params['data'],
+                    in_path     = args.in_path,
+                    run         = case_params['data']['run_elv'],
+                    wait        = args.wait,
+                    run_post    = case_params['data']['run_post'],
+                    n_cores     = args.n_cores,
+                    w           = args.w)
+
+    write_case_json(path=args.path+f'/case_{cid}.json', abs_path=True)
+    write_stimuli_json(path=args.path+f'/stimuli_{cid}.json', abs_path=True)
