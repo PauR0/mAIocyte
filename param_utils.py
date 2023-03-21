@@ -6,14 +6,14 @@ import json
 
 
 
-default_lnr_stimuli_params = {
+default_S1S2_params = {
     'metadata' : {
         'version' : None,
         'type' : 'stimulus'
     },
     'data' : {
-        'method'      : 'linear',
-        's1'          : None,
+        'method'      : 'S1S2',
+        's1'          : 600,
         's2_ini'      : 1000,
         's2_end'      : 250,
         's2_step'     : 20,
@@ -24,15 +24,18 @@ default_lnr_stimuli_params = {
     }
 }
 
-
 default_case_params = {
     'metadata' : {
         'version' : None,
         'type' : 'case'
     },
     'data' : {
-        'myocyte'  : None,
-        'dt'       : 0.02
+        'myo'      : 'ordendo',
+        'dt'       : 0.02,
+        'run_elv'  : False,
+        'run_post' : False,
+        'in_path'  : False,
+        'n_cores'  : 8
     }
 }
 
