@@ -83,12 +83,12 @@ def pretty_write(j,
     f.write(j)
 #
 
-def get_json_reader(json_filename,template):
+def get_json_reader(json_filename, template):
 
     params = deepcopy(template)
     fname = json_filename
 
-    def read_json(path=None,abs_path=False):
+    def read_json(path=None, abs_path=False):
 
         new_params = deepcopy(params)
         try:
@@ -113,12 +113,12 @@ def get_json_reader(json_filename,template):
     return read_json
 #
 
-def get_json_writer(json_filename,template):
+def get_json_writer(json_filename, template):
 
     params = deepcopy(template)
     fname = json_filename
 
-    def write_json(path,data=None,abs_path=False):
+    def write_json(path, data=None, abs_path=False):
 
         if abs_path:
             json_file = path
@@ -143,12 +143,47 @@ def get_json_writer(json_filename,template):
     return write_json
 #
 
+def update_params(params, exclude_key=None, copy=False, **kwargs):
+    """
+    Update the param dictionaries with kwargs.
+
+    Arguments:
+    ------------
+
+        params : dict
+            The dictionary to be updated.
+
+        excluded_key : list['str']
+            A list containing the dict entries that wont be updated
+
+        copy : bool
+            Whether to make a copy of params.
+
+        **kwargs
+
+    Returns:
+    ----------
+
+        params
+            The updated dictionary
+    """
+
+    if exclude_key is None:
+        exclude_key = []
+
+    for k, v in kwargs.items():
+        if k not in exclude_key and kwargs[k] is not None:
+            if k in params['data']:
+                params['data'][k] = v
+
+    return params
+#
 
 
 read_case_json = get_json_reader("elvira_case.json",
                                         default_case_params)
 read_stimuli_json = get_json_reader("stimuli.json",
-                                        default_lnr_stimuli_params)
+                                        default_S1S2_params)
 read_AP_json = get_json_reader("AP_data.json",
                                         default_AP_data)
 read_EG_json = get_json_reader("EG_data.json",
@@ -157,7 +192,7 @@ read_EG_json = get_json_reader("EG_data.json",
 write_case_json = get_json_writer("elvira_case.json",
                                     default_case_params)
 write_stimuli_json = get_json_writer("stimuli.json",
-                                        default_lnr_stimuli_params)
+                                        default_S1S2_params)
 write_AP_json = get_json_writer("AP_data.json",
                                         default_AP_data)
 write_EG_json = get_json_writer("EG_data.json",
