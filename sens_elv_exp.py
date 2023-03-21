@@ -250,7 +250,7 @@ class SensElvExp:
         self.tr_offset : int = 0
         self.s1_per_s2 : int = 9
 
-        self.CV_DI : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'DI_or', 'DI_dest', 'CV', 'cell_type', 'node_or', 'node_dest'])
+        self.CV_DI : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'DI_or', 'DI_dest', 'APD_or', 'APD_dest', 'CV', 'cell_type', 'node_or', 'node_dest'])
         self.APD_DI : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'APD', 'DI', 'APD+1', 'cell_type', 'node_id'])
         self.stimuli_segmented : pd.DataFrame = pd.DataFrame(columns=['S1', 'S2', 'DI', 'AP+1', 't_act', 'AP', 'cell_type', 'node_id', "APD", "DI","APD+1"])
     #
@@ -587,7 +587,7 @@ class SensElvExp:
 
             node = self.nodes[ii]
             for s2, [i1,i2,ie] in zip(node.S2s, node.S1S2_gids):
-                _, or_S1_apd90_t = compute_max_der_and_perc_repolarization(node.time[i1:i2], node.AP[i1:i2], perc=0.9, show=self.debug)
+                or_md_S1_t, or_S1_apd90_t = compute_max_der_and_perc_repolarization(node.time[i1:i2], node.AP[i1:i2], perc=0.9, show=self.debug)
                 or_S2_md_t, _    = compute_max_der_and_perc_repolarization(node.time[i2:ie], node.AP[i2:ie], perc=0.9, show=self.debug)
 
                 for jj in node_order[kk+1:]:
@@ -596,13 +596,15 @@ class SensElvExp:
                     if aux.any():
                         s2i = aux.argmax()
                         [j1,j2,je]  = dest_node.S1S2_gids[s2i]
-                        _, dest_S1_apd90_t = compute_max_der_and_perc_repolarization(dest_node.time[j1:j2], dest_node.AP[j1:j2], perc=0.9, show=self.debug)
+                        dest_md_S1_t, dest_S1_apd90_t = compute_max_der_and_perc_repolarization(dest_node.time[j1:j2], dest_node.AP[j1:j2], perc=0.9, show=self.debug)
                         dest_S2_md_t, _    = compute_max_der_and_perc_repolarization(dest_node.time[j2:je], dest_node.AP[j2:je], perc=0.9, show=self.debug)
                         d_ij = np.linalg.norm(node.loc - dest_node.loc)
                         data.append({'S1'       : self.s1,
                                      'S2'        : s2,
                                      'DI_or'     : or_S2_md_t - or_S1_apd90_t,
                                      'DI_dest'   : dest_S2_md_t - dest_S1_apd90_t,
+                                     'APD_or'     : or_S1_apd90_t - or_md_S1_t,
+                                     'APD_dest'   : dest_S1_apd90_t - dest_md_S1_t,
                                      'CV'        :  d_ij / (dest_S2_md_t - or_S2_md_t),
                                      'cell_type' : self.cell_type,
                                      'node_or'   : ii,
