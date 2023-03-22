@@ -555,5 +555,5 @@ if __name__ == '__main__':
                     n_cores     = case_params['data']['n_cores'],
                     w           = args.w)
 
-    write_case_json(path=args.path+f'/case_{cid}.json', abs_path=True)
-    write_stimuli_json(path=args.path+f'/stimuli_{cid}.json', abs_path=True)
+    write_case_json(args.path+f'/case_{cid}.json', case_params, abs_path=True)
+    write_stimuli_json(args.path+f'/stimuli_{cid}.json', stim_params, abs_path=True)
