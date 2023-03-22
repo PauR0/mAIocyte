@@ -401,16 +401,17 @@ def make_case(path,
                                      t_max=t_max,
                                      dt=dt)
 
-    exec_command = [FILE_DIR + "/runelvBZ.sh", str(n_cores), main_file_fname, f"{output_dname}/", f"{output_dname}/log"]
+    exec_command = [FILE_DIR + "/runelvBZ.sh", str(n_cores), f"data/main_{cid}.dat", f"output_{cid}", f"output_{cid}/log"]
+    print(exec_command)
     if run:
-        spro = Popen(exec_command)
+        spro = Popen(exec_command, cwd=path)
 
     if wait or run_post:
         spro.communicate()
     if run_post:
-        post_config_fname = make_run_post_config_file(path, n_cores, s1, s2_step)
-        exec_command = FILE_DIR + f"/runpost.sh {post_config_fname} {output_dname} &"
-        spro = Popen(exec_command)
+        make_run_post_config_file(path, n_cores, case_id=cid)
+        exec_command = [FILE_DIR+"/runpost.sh", f"data/post_config_{cid}.dat", f"output_{cid}"]
+        spro = Popen(exec_command, cwd=path)
 
     return cid
 #
