@@ -535,9 +535,9 @@ if __name__ == '__main__':
                                 n_cores  = args.n_cores)
 
     if args.stim_params is not None:
-        stim_params = read_stimuli_json(path=args.case_params, abs_path=True)
+        stim_params = read_stimuli_json(path=args.stim_params, abs_path=True)
     else:
-        stim_params = read_stimuli_json(path=args.case_params)
+        stim_params = read_stimuli_json(path=args.path)
 
 
     cid = make_case(path        = args.path,
