@@ -24,12 +24,10 @@ def check_s2_params(s2_ini, s2_end, s2_step):
     if s2_ini < s2_end:
         cond = lambda s2 : s2_end >= s2
         if s2_step < 0:
-            print("Correcting s2_step sign")
             s2_step *= -1
     else:
         cond = lambda s2 : s2_end <= s2
         if s2_step > 0:
-            print("Correcting s2_step sign")
             s2_step *= -1
 
     return s2_step, cond
