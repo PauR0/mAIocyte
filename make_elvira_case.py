@@ -313,7 +313,7 @@ def make_main_file(path, case_id, t_max, dt):
                 new_line = f'Slab3D_{case_id}\n'
 
             if '*STIMULUS' in line:
-                line = f'*STIMULUS, FILE:file_stimulus_{case_id}.dat\n'
+                line = f'*STIMULUS, FILE:\"file_stimulus_{case_id}.dat\"\n'
 
             fmain.write(line)
 
