@@ -460,12 +460,14 @@ if __name__ == '__main__':
                         '--run-elv',
                         dest='run_elv',
                         action='store_true',
+                        default=None,
                         help="""Run ELVIRA on the generated case.""")
 
     parser.add_argument('-o',
                         '--run-post',
                         dest='run_post',
                         action='store_true',
+                        default=None,
                         help="""Make ensight files after the simulation.""")
 
     parser.add_argument('--template-path',
@@ -479,11 +481,13 @@ if __name__ == '__main__':
                         '--in-path',
                         dest='in_path',
                         action='store_true',
+                        default=None,
                         help="""Save files in an already existing case.""")
 
     parser.add_argument('--wait',
                         dest='wait',
                         action='store_true',
+                        default=None,
                         help=""" Make the python process wait for the simulation
                         to finish.""")
 
@@ -496,7 +500,7 @@ if __name__ == '__main__':
     parser.add_argument('-n',
                         '--n-cores',
                         dest='n_cores',
-                        default=8,
+                        default=None,
                         action='store',
                         type=int,
                         help="""Number of cores to use for runing the simulation.""")
@@ -544,11 +548,11 @@ if __name__ == '__main__':
                     myo         = case_params['data']['myo'],
                     dt          = case_params['data']['dt'],
                     stim_params = stim_params['data'],
-                    in_path     = args.in_path,
+                    in_path     = case_params['data']['in_path'],
                     run         = case_params['data']['run_elv'],
                     wait        = args.wait,
                     run_post    = case_params['data']['run_post'],
-                    n_cores     = args.n_cores,
+                    n_cores     = case_params['data']['n_cores'],
                     w           = args.w)
 
     write_case_json(path=args.path+f'/case_{cid}.json', abs_path=True)
