@@ -321,9 +321,9 @@ def make_main_file(path, case_id, t_max, dt):
     return main_fname
 #
 
-def make_run_post_config_file(path, ncores, s1, s2_step, ftype=1):
+def make_run_post_config_file(path, ncores, case_id, ftype=1):
 
-    fname = f"{path}/data/post_config_{s1}_{s2_step}.dat"
+    fname = f"{path}/data/post_config_{case_id}.dat"
     #Read template lines
     with open(f"{TEMP_PATH}/data/post_config.dat", 'r') as ftemp:
         lines = ftemp.readlines()
@@ -346,7 +346,7 @@ def make_run_post_config_file(path, ncores, s1, s2_step, ftype=1):
 
             if "#POSTFILENAME" in line:
                 f.write(line)
-                f.write(f"Bloque_{s1}_{s2_step}\n")
+                f.write(f"Bloque_{case_id}\n")
                 continue
 
             if "#FILETYPE" in line:
@@ -394,12 +394,12 @@ def make_case(path,
     if myo is not None and not in_path:
         make_node_file(path, myo, w=w)
 
-    output_dname = make_output_dir(path, case_id=cid, w=w)
+    make_output_dir(path, case_id=cid, w=w)
 
-    main_file_fname = make_main_file(path=path,
-                                     case_id=cid,
-                                     t_max=t_max,
-                                     dt=dt)
+    make_main_file(path=path,
+                   case_id=cid,
+                   t_max=t_max,
+                   dt=dt)
 
     exec_command = [FILE_DIR + "/runelvBZ.sh", str(n_cores), f"data/main_{cid}.dat", f"output_{cid}", f"output_{cid}/log"]
     print(exec_command)
