@@ -69,6 +69,22 @@ default_EG_data = {
     }
 }
 
+default_registrate_json = {
+        "metadata" : {"version" : "0.1",
+                      "type" : "registrate"} ,
+        "data" : {"method" : "rigid_align",
+                  "torso_dir" : None}
+}
+
+default_landmarks_json = {
+        "metadata" : {"version" : "0.1",
+                      "type" : "vent_landmark"} ,
+        "data" : {  "base" : None,
+                    "apex" : None,
+                    "sept" : None
+    }
+}
+
 def pretty_write(j,
                  f,
                  write_replacements = None):
@@ -99,8 +115,11 @@ def get_json_reader(json_filename, template):
 
             with open(json_file) as param_file:
                 read_params = json.load(param_file)
-                for k in read_params['metadata']:
-                    new_params['metadata'][k] = read_params['metadata'][k]
+                try:
+                    for k in read_params['metadata']:
+                        new_params['metadata'][k] = read_params['metadata'][k]
+                except KeyError:
+                    print(f"WARNING: {json_file} has not metadata info....")
                 for k in read_params['data']:
                     new_params['data'][k] = read_params['data'][k]
         except (FileNotFoundError,TypeError):
@@ -188,6 +207,10 @@ read_AP_json = get_json_reader("AP_data.json",
                                         default_AP_data)
 read_EG_json = get_json_reader("EG_data.json",
                                         default_EG_data)
+read_registrate_json = get_json_reader("registrate.json",
+                                        default_registrate_json)
+read_landmarks_json = get_json_reader("landmarks.json",
+                                        default_landmarks_json)
 
 write_case_json = get_json_writer("elvira_case.json",
                                     default_case_params)
@@ -197,3 +220,7 @@ write_AP_json = get_json_writer("AP_data.json",
                                         default_AP_data)
 write_EG_json = get_json_writer("EG_data.json",
                                         default_EG_data)
+write_registrate_json = get_json_writer("registrate.json",
+                                        default_registrate_json)
+write_landmarks_json = get_json_writer("landmarks.json",
+                                        default_landmarks_json)
