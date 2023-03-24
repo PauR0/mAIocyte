@@ -235,7 +235,7 @@ class torso_vent_alignment:
         """
 
         r, t = rigid_transform_3D(target=self.target_landmarks.T,
-                                  source=self.target_landmarks.T)
+                                  source=self.source_landmarks.T)
 
         if update:
             self.translation_vector = t.flatten
