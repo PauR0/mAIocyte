@@ -244,12 +244,12 @@ class torso_vent_alignment:
         return r, t
     #
 
-    def compute_registration(self, apply=True):
+    def compute_registration(self, update=True, apply=True):
 
-        self.landmark_procrustes()
+        r, t = self.landmark_procrustes(update=update)
 
         if apply:
-            self.apply_transformation()
+            self.apply_transformation(t=t, r=r)
     #
 
     def apply_transformation(self, t=None, r=None, s=None):
