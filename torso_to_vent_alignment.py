@@ -311,7 +311,7 @@ class torso_vent_alignment:
         p.show()
     #
 
-def align_torso_to_vent(vent_dir, torso_dir, f=False):
+def align_torso_to_vent(vent_dir, torso_dir, debug=False, f=False):
 
     """
     Function to align a torso model to a patient ventricle.
@@ -352,9 +352,23 @@ def align_torso_to_vent(vent_dir, torso_dir, f=False):
     tva.vent_path = vent_dir
     tva.load_source_data()
     tva.load_torso(torso_dir=torso_dir)
-    tva.plot(show_target_vent=True)
+
+    if debug:
+        tva.plot(show_target_vent=True)
+
     tva.compute_registration(apply=True)
-    tva.plot(show_target_vent=True)
+
+    if debug:
+        print("-----------------------")
+        print("Rotation Matrix:")
+        print(tva.rotation)
+        print("-----------------------")
+        print("Translation Vector:")
+        print(tva.rotation)
+        print("-----------------------")
+        tva.plot(show_target_vent=True)
+
+
     tva.save_torso(f=f)
 
     return tva.torso
@@ -374,6 +388,12 @@ if __name__ == '__main__':
                         dest='f',
                         action='store_true',
                         help=""" Overwrite existing files.""")
+
+    parser.add_argument('-d',
+                        '--debug',
+                        dest='debug',
+                        action='store_true',
+                        help="""Plot the available data and print stuff.""")
 
     parser.add_argument('vent_dir',
                         action='store',
@@ -402,4 +422,4 @@ if __name__ == '__main__':
             print("ERROR: Given torso_dir does not exist or is not a valid directory")
             sys.exit()
 
-    align_torso_to_vent(args.vent_dir, args.torso_dir, f=args.f)
+    align_torso_to_vent(args.vent_dir, args.torso_dir, debug=args.debug, f=args.f)
