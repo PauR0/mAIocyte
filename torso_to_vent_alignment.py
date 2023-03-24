@@ -252,14 +252,20 @@ class torso_vent_alignment:
             self.apply_transformation()
     #
 
-    def apply_transformation(self):
+    def apply_transformation(self, t=None, r=None, s=None):
+
+        if t is not None:
+            self.translation_vector = t
+        if r is not None:
+            self.rotation = r
+
 
         if self.torso is not None:
-            self.torso.points = transform(self.torso.points)
+            self.torso.points = transform(self.torso.points, t=self.translation_vector, r=self.rotation)
         if self.target_landmarks is not None:
-            self.target_landmarks = transform(self.target_landmarks)
+            self.target_landmarks = transform(self.target_landmarks, t=self.translation_vector, r=self.rotation)
         if self.target_vent is not None:
-            self.target_vent.points = transform(self.target_vent.points)
+            self.target_vent.points = transform(self.target_vent.points, t=self.translation_vector, r=self.rotation)
     #
 
     def save_torso(self, path=None, f=False):
