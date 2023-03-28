@@ -311,7 +311,7 @@ class torso_vent_alignment:
         p.show()
     #
 
-def align_torso_to_vent(vent_dir, torso_dir, debug=False, f=False):
+def align_torso_to_vent(case_dir, torso_dir, debug=False, f=False):
 
     """
     Function to align a torso model to a patient ventricle.
@@ -328,7 +328,7 @@ def align_torso_to_vent(vent_dir, torso_dir, debug=False, f=False):
     Arguments:
     ------------
 
-        vent_dir : str
+        case_dir : str
             The path to the ventricle directory. It is assumed to contain the
             ventricle_Tagged.vtk and the landmark.json.
 
@@ -337,7 +337,7 @@ def align_torso_to_vent(vent_dir, torso_dir, debug=False, f=False):
             landmark.json files.
 
         f : bool
-            To force overwritting if a torso_dir already exists at vent_dir
+            To force overwritting if a torso_dir already exists at case_dir
 
     """
 
@@ -349,7 +349,7 @@ def align_torso_to_vent(vent_dir, torso_dir, debug=False, f=False):
 
 
     tva = torso_vent_alignment()
-    tva.vent_path = vent_dir
+    tva.vent_path = case_dir
     tva.load_source_data()
     tva.load_torso(torso_dir=torso_dir)
 
@@ -395,7 +395,7 @@ if __name__ == '__main__':
                         action='store_true',
                         help="""Plot the available data and print stuff.""")
 
-    parser.add_argument('vent_dir',
+    parser.add_argument('case_dir',
                         action='store',
                         type=str,
                         nargs='?',
@@ -412,14 +412,14 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if args.vent_dir is not None:
-        if not os.path.exists(args.vent_dir) or not os.path.isdir(args.vent_dir):
-            print("ERROR: Given vent_dir does not exist or is not a valid directory")
+    if args.case_dir is not None:
+        if not os.path.exists(args.case_dir) or not os.path.isdir(args.case_dir):
+            print("ERROR: Given case_dir does not exist or is not a valid directory")
             sys.exit()
 
-    if args.vent_dir is not None:
+    if args.torso_dir is not None:
         if not os.path.exists(args.torso_dir) or not os.path.isdir(args.torso_dir):
             print("ERROR: Given torso_dir does not exist or is not a valid directory")
             sys.exit()
 
-    align_torso_to_vent(args.vent_dir, args.torso_dir, debug=args.debug, f=args.f)
+    align_torso_to_vent(args.case_dir, args.torso_dir, debug=args.debug, f=args.f)
