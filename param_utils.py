@@ -39,7 +39,7 @@ default_case_params = {
     }
 }
 
-default_AP_data = {
+default_AP_params = {
     'metadata' : {
         'version' : None,
         'type' : 'AP_data',
@@ -56,7 +56,7 @@ default_AP_data = {
     }
 }
 
-default_EG_data = {
+default_EG_params = {
     'metadata' : {
         'version' : None,
         'type' : 'AP_data',
@@ -204,10 +204,10 @@ read_case_json = get_json_reader("elvira_case.json",
                                         default_case_params)
 read_stimuli_json = get_json_reader("stimuli.json",
                                         default_S1S2_params)
-read_AP_json = get_json_reader("AP_data.json",
-                                        default_AP_data)
-read_EG_json = get_json_reader("EG_data.json",
-                                        default_EG_data)
+read_AP_json = get_json_reader("AP_params.json",
+                                        default_AP_params)
+read_EG_json = get_json_reader("EG_params.json",
+                                        default_EG_params)
 read_registrate_json = get_json_reader("registrate.json",
                                         default_registrate_json)
 read_landmarks_json = get_json_reader("landmarks.json",
@@ -217,10 +217,10 @@ write_case_json = get_json_writer("elvira_case.json",
                                     default_case_params)
 write_stimuli_json = get_json_writer("stimuli.json",
                                         default_S1S2_params)
-write_AP_json = get_json_writer("AP_data.json",
-                                        default_AP_data)
-write_EG_json = get_json_writer("EG_data.json",
-                                        default_EG_data)
+write_AP_json = get_json_writer("AP_params.json",
+                                        default_AP_params)
+write_EG_json = get_json_writer("EG_params.json",
+                                        default_EG_params)
 write_registrate_json = get_json_writer("registrate.json",
                                         default_registrate_json)
 write_landmarks_json = get_json_writer("landmarks.json",
