@@ -47,12 +47,13 @@ default_AP_params = {
         'time' : None
     },
     'data' : {
-        'sim_id' : None,
-        't_ini'  : 0.0,
-        't_end'  : None,
-        't_delta': 1.0,
-        't_extra'  : 500.0,
-        'shape' : None
+        'sim_id'    : None,
+        't_ini'     : 0.0,
+        't_end'     : None,
+        't_delta'   : 1.0,
+        't_extra'   : 500.0,
+        'shape'     : None,
+        "save_freq" : 1000
     }
 }
 

@@ -159,7 +159,7 @@ def AT_to_AP(case_dir,
     N = int((t_end-t_ini)/t_delta)
     times = np.linspace(t_ini, t_end, N)
 
-    save_freq = 1000
+    save_freq = ap_params['data']['save_freq']
     now = dt.datetime.now()
     ap_params['metadata']['date'] = now.strftime('%d-%m-%Y')
     ap_params['metadata']['time'] = now.strftime('%H:%M')
