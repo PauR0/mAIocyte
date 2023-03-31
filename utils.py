@@ -1,4 +1,5 @@
 
+import numpy as np
 
 
 def check_s2_params(s2_ini, s2_end, s2_step):
@@ -64,4 +65,12 @@ def check_attrs(obj, attr_names, err_message=None):
                 return
 
     return True
+#
+
+def pad_list_to_array(v, fillval=0):
+    lens = np.array([len(item) for item in v])
+    mask = lens[:,None] > np.arange(lens.max())
+    out = np.full(mask.shape,fillval)
+    out[mask] = np.concatenate(v)
+    return out
 #
