@@ -72,7 +72,7 @@ def load_act_times(act_times_file):
 
         f_rep = re.sub(r'FloatList\s+size\=\d+\s', '', f).splitlines()
         lat = [eval(l) for l in tqdm(f_rep, desc="Parsing activation times.")]
-        act_times = pad_list_to_array(lat)
+        act_times = pad_list_to_array(lat, fillval=np.nan)
 
     elif ext.lower() == '.npy':
         act_times = np.load(act_times_file)
