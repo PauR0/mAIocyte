@@ -147,7 +147,7 @@ def AT_to_AP(case_dir,
     cell_types = load_cell_types_from_mesh(case_dir)
     print(f"Cell types description:")
     for ct in np.unique(cell_types):
-        print(f"\- Type {ct}: n {(cell_types == ct).sum()}")
+        print(f"\t- Type {ct}: n {(cell_types == ct).sum()}")
     cell_models = build_cell_models(np.unique(cell_types))
 
     ap_params = set_up_sim_times(ap_params, last_act_time=act_times[at_ids].max())
