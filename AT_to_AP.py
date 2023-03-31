@@ -1,6 +1,5 @@
 #! /usr/bin/env python3
 
-from asyncore import write
 import os, sys
 import datetime as dt
 import numpy as np
