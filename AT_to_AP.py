@@ -180,7 +180,7 @@ def AT_to_AP(case_dir,
         if ct != 'core':
             cell = cell_models[ct]
             cell.times = times
-            cell.act_times = act_times[:,nid]
+            cell.act_times = act_times[nid, at_ids[nid]]
             cell.run_simulation()
             AP[nid,:] = cell.ap
             if nid % save_freq == 0:
