@@ -249,8 +249,10 @@ if __name__ == '__main__':
             print("ERROR: Given act_times file does not exist or is not a file")
             sys.exit()
 
-
-    ap_params = read_AP_json(path=args.ap_params, abs_path=True)
+    if args.ap_params is not None:
+        ap_params = read_AP_json(path=args.ap_params, abs_path=True)
+    else:
+        ap_params = read_AP_json(path=args.case_dir)
     AT_to_AP(case_dir=args.case_dir,
              ap_params=ap_params,
              act_times_file=args.act_times,
