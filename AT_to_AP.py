@@ -99,6 +99,40 @@ def make_sim_dir(case_dir, act_times_file=None, sim_id=None, f=False):
     else:
         os.makedirs(sim_dir, exist_ok=True)
         return sim_dir, sim_id
+#
+
+def set_up_sim_times(ap_params, last_act_time):
+    """
+    Function to set up proper simulation times, which
+    should be expressed in ms. It follows the following logic:
+
+    If t_ini is negative it is set as the last_act_time - t_ini.
+    If t_max is None it is set as the last activation + t_extra.
+
+    Arguments:
+    ------------
+
+        ap_params : dict
+            The parameters passed to perform the simulation
+
+        last_act_time : float
+            The last activation read from the activation times file.
+
+    Returns:
+    -----------
+
+        ap_params : dict
+            The updated parameter dictionary.
+    """
+
+    if ap_params['data']['t_ini'] < 0:
+        ap_params['data']['t_ini'] = last_act_time - ap_params['data']['t_ini']
+
+    if ap_params['data']['t_end'] is None:
+        ap_params['data']['t_end'] = last_act_time + ap_params['data']['t_extra']
+
+    return ap_params
+
 
 def AT_to_AP(case_dir,
              ap_params,
@@ -116,13 +150,12 @@ def AT_to_AP(case_dir,
         print(f"\- Type {ct}: n {(cell_types == ct).sum()}")
     cell_models = build_cell_models(np.unique(cell_types))
 
+    ap_params = set_up_sim_times(ap_params, last_act_time=act_times[at_ids].max())
+
     t_ini = ap_params['data']['t_ini']
     t_delta = ap_params['data']['t_delta']
-    t_extra = ap_params['data']['t_extra']
+    t_end = ap_params['data']['t_end']
 
-    if ap_params['data']['t_end'] is None:
-        t_end = act_times[at_ids].max() + t_extra
-        ap_params['data']['t_end'] = t_end
     N = int((t_end-t_ini)/t_delta)
     times = np.linspace(t_ini, t_end, N)
 
