@@ -47,6 +47,7 @@ default_AP_data = {
         'time' : None
     },
     'data' : {
+        'sim_id' : None,
         't_ini'  : 0.0,
         't_end'  : None,
         't_delta': 1.0,
