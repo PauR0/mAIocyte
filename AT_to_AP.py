@@ -10,7 +10,7 @@ import pyvista as pv
 from tqdm import tqdm
 
 from arrithmic3D_case_reader import A3DENS
-from CellSim import CellSim
+from CellSim import CellSim, build_multiple_cells
 from param_utils import read_AP_json, write_AP_json
 from utils import pad_list_to_array
 
@@ -145,10 +145,11 @@ def AT_to_AP(case_dir,
     print(f"ACT_TIMES:  shape {act_times.shape}; max {act_times[at_ids].max()}; min {act_times[at_ids].min()}; nans {(~at_ids).sum()}")
 
     cell_types = load_cell_types_from_mesh(case_dir)
+    types_set = np.unique(cell_types)
     print(f"Cell types description:")
-    for ct in np.unique(cell_types):
+    for ct in types_set:
         print(f"\t- Type {ct}: n {(cell_types == ct).sum()}")
-    cell_models = build_cell_models(np.unique(cell_types))
+    cell_sims = build_multiple_cells(cell_types, types_set=types_set)
 
     ap_params = set_up_sim_times(ap_params, last_act_time=act_times[at_ids].max())
 
@@ -176,13 +177,12 @@ def AT_to_AP(case_dir,
     write_AP_json(sim_dir, data=ap_params)
     np.save(f"{sim_dir}/act_times.npy", act_times)
     AP = np.memmap(f"{sim_dir}/AP.npy", dtype='float64', mode='w+', shape=(len(cell_types), times.shape[0]))
-    for nid, ct in enumerate(tqdm(cell_types)):
-        if ct != 'core':
-            cell = cell_models[ct]
-            cell.times = times
-            cell.act_times = act_times[nid, at_ids[nid]]
-            cell.run_simulation()
-            AP[nid,:] = cell.ap
+    for nid, cs in enumerate(tqdm(cell_sims)):
+        if cs is not None:
+            cs.times = times
+            cs.act_times = act_times[nid, at_ids[nid]]
+            cs.run_simulation()
+            AP[nid,:] = cs.ap
             if nid % save_freq == 0:
                 AP.flush()
 #
