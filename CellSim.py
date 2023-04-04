@@ -67,6 +67,44 @@ def prepare_curve_ds(curve_ds):
     curves_DS = np.array(curve_ds['AP+1'].tolist())
     return curves_DS, t_delta
 
+def build_multiple_cells(cell_types, types_set=None):
+    """
+    Given a list with each cell type, this function loads all the required
+    data sets for each unique cell type then builds its Regresor and ActPotCurve
+    handler. Finally it builds a list containing a CellSim acording with the
+    cell type
+
+    """
+
+    if types_set is None:
+        types_set = np.unique(cell_types)
+    cell_models = {}
+    for ct in types_set:
+        if ct != 'core':
+            cell_models[ct] = {}
+            curve_ds, curve_fvs = load_curve_pickles(cell_type=ct)
+            cell_models[ct]['curve_ds']  = curve_ds
+            cell_models[ct]['curve_fvs'] = curve_fvs
+            X,Y = prepare_trainig_set(trset=curve_fvs)
+            cell_models[ct]['state_regresor'] = LUTRegresor(X=X, Y=Y, train=True)
+
+            curves_DS, t_delta = prepare_curve_ds(curve_ds=curve_ds)
+            cell_models[ct]['state_to_curve'] = LUTActPotCurve(curves_DS=curves_DS, curves_fvs=Y, t_delta=t_delta)
+
+    cells = []
+    for c in cell_types:
+        if c == 'core':
+            cells.append(None)
+        else:
+            cellsim = CellSim(cell_type=c)
+            cellsim.cell = Cell(state_reg=cell_models[c]["state_regresor"], act_pot_curve=cell_models[c]["state_to_curve"])
+            _, s0 = get_initial_state(cell_models[c]['curve_fvs'], S1=cellsim.CL0)
+            cellsim.cell.set_state(s0)
+            cells.append(cellsim)
+
+    return cells
+
+
 class CellSim:
 
     def __init__(self, cell_type=None, CL0=600):
