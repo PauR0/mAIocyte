@@ -143,15 +143,19 @@ def get_chunk_size(size, n_proc):
 
 def run_sim(args):
 
-    ini, end, cell_sims, times, act_times, at_ids, AP = args
-    end = min(len(cell_sims)-1, end)
-    for nid, cs in enumerate(tqdm(cell_sims[ini:end])):
+    n, chunk_size, cell_sims, times, act_times, at_ids, AP = args
+
+    ini, end = n*chunk_size, min(len(cell_sims)-1, (n+1)*chunk_size)
+
+    text = f"Process #{n}: "
+    for nid, cs in enumerate(tqdm(cell_sims[ini:end], desc=text, position=n, leave=False)):
         if cs is not None:
             cs.times = times
             cs.act_times = act_times[ini+nid, at_ids[ini+nid]]
             cs.run_simulation()
             AP[ini+nid,:] = cs.ap
     AP.flush()
+    print(f"Process #{n}: Finished!")
 
 
 def AT_to_AP(case_dir,
@@ -202,7 +206,7 @@ def AT_to_AP(case_dir,
 
     procs = []
     for i in range(ap_params['data']['n_proc']):
-        p = Process(target=run_sim, args=((i*chunk_size, (i+1)*chunk_size, cell_sims, times, act_times, at_ids, AP),))
+        p = Process(target=run_sim, args=((i, chunk_size, cell_sims, times, act_times, at_ids, AP),))
         procs.append(p)
         p.start()
 
