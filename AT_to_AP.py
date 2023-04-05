@@ -4,6 +4,8 @@ import os, sys
 import re
 import argparse
 import datetime as dt
+from multiprocessing import Process
+
 
 import numpy as np
 import pyvista as pv
@@ -139,6 +141,17 @@ def get_chunk_size(size, n_proc):
         return size // n_proc
     return size // (n_proc - 1)
 
+def run_sim(args):
+
+    ini, end, cell_sims, times, act_times, at_ids, AP = args
+    end = min(len(cell_sims)-1, end)
+    for nid, cs in enumerate(tqdm(cell_sims[ini:end])):
+        if cs is not None:
+            cs.times = times
+            cs.act_times = act_times[ini+nid, at_ids[ini+nid]]
+            cs.run_simulation()
+            AP[ini+nid,:] = cs.ap
+    AP.flush()
 
 
 def AT_to_AP(case_dir,
@@ -184,14 +197,16 @@ def AT_to_AP(case_dir,
     write_AP_json(sim_dir, data=ap_params)
     np.save(f"{sim_dir}/act_times.npy", act_times)
     AP = np.memmap(f"{sim_dir}/AP.npy", dtype='float64', mode='w+', shape=(len(cell_types), times.shape[0]))
-    for nid, cs in enumerate(tqdm(cell_sims)):
-        if cs is not None:
-            cs.times = times
-            cs.act_times = act_times[nid, at_ids[nid]]
-            cs.run_simulation()
-            AP[nid,:] = cs.ap
-            if nid % save_freq == 0:
-                AP.flush()
+    chunk_size = get_chunk_size(len(cell_sims), ap_params['data']['n_proc'])
+
+    procs = []
+    for i in range(ap_params['data']['n_proc']):
+        p = Process(target=run_sim, args=((i*chunk_size, (i+1)*chunk_size, cell_sims, times, act_times, at_ids, AP),))
+        procs.append(p)
+        p.start()
+
+    for p in procs:
+        p.join()
 #
 
 if __name__ == '__main__':
