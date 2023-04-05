@@ -4,6 +4,8 @@ import numpy as np
 
 import pandas as pd
 
+from tqdm import tqdm
+
 import matplotlib.pyplot as plt
 
 
@@ -92,7 +94,7 @@ def build_multiple_cells(cell_types, types_set=None):
             cell_models[ct]['state_to_curve'] = LUTActPotCurve(curves_DS=curves_DS, curves_fvs=Y, t_delta=t_delta)
 
     cells = []
-    for c in cell_types:
+    for c in tqdm(cell_types, desc='Building cells.'):
         if c == 'core':
             cells.append(None)
         else:
