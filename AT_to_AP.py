@@ -128,7 +128,7 @@ def set_up_sim_times(ap_params, last_act_time):
     """
 
     if ap_params['data']['t_ini'] < 0:
-        ap_params['data']['t_ini'] = last_act_time - ap_params['data']['t_ini']
+        ap_params['data']['t_ini'] = last_act_time + ap_params['data']['t_ini']
 
     if ap_params['data']['t_end'] is None:
         ap_params['data']['t_end'] = last_act_time + ap_params['data']['t_extra']
@@ -176,6 +176,7 @@ def AT_to_AP(case_dir,
     t_ini = ap_params['data']['t_ini']
     t_delta = ap_params['data']['t_delta']
     t_end = ap_params['data']['t_end']
+    print(f"Action Potentials will be simulated from {t_ini} to {t_end} with a dt {t_delta}")
 
     N = int((t_end-t_ini)/t_delta)
     times = np.linspace(t_ini, t_end, N)
