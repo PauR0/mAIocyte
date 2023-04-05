@@ -132,6 +132,13 @@ def set_up_sim_times(ap_params, last_act_time):
         ap_params['data']['t_end'] = last_act_time + ap_params['data']['t_extra']
 
     return ap_params
+#
+
+def get_chunk_size(size, n_proc):
+    if size % n_proc == 0:
+        return size // n_proc
+    return size // (n_proc - 1)
+
 
 
 def AT_to_AP(case_dir,
