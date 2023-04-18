@@ -140,6 +140,7 @@ def get_chunk_size(size, n_proc):
     if size % n_proc == 0:
         return size // n_proc
     return size // (n_proc - 1)
+#
 
 def run_sim(args):
 
@@ -156,6 +157,7 @@ def run_sim(args):
             AP[ini+nid,:] = cs.ap
     AP.flush()
     print(f"Process #{n}: Finished!")
+#
 
 
 def AT_to_AP(case_dir,
