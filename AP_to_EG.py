@@ -16,7 +16,7 @@ from scipy.spatial import KDTree
 from param_utils import read_AP_json, read_EG_json, write_EG_json
 
 
-class Probe:
+class Electrode:
 
     def __init__(self, name, loc):
 
@@ -37,7 +37,7 @@ class Probe:
         if self.EG is not None:
             nt = len(self.EF)
 
-        return F"""Probe: {self.name}:
+        return F"""Electrode: {self.name}:
                         props:
                             location: {self.loc}
                             Time instants computed: {nt}
@@ -47,6 +47,7 @@ class Probe:
                             t_end = {self.t_end}
                             t_delta = {self.t_delta}
                 """
+    #
 
     def compute_distance_vectors(self, mesh, normalize=False):
 
@@ -87,10 +88,12 @@ class Probe:
         if self.EG is not None:
             t = self.t_ini + np.arange(len(self.EG)) * self.t_delta
             ax.plot(t, self.EG)
+            ax.set_title(self.name)
 
         if show:
             plt.show()
     #
+#
 
 
 def load_data_from_path(path, ap_params=None):
