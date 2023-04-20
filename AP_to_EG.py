@@ -95,29 +95,16 @@ class Electrode:
     #
 #
 
+def load_sim_path(sim_path):
 
-def load_data_from_path(path, ap_params=None):
+    ap_params = read_AP_json(path=sim_path)
 
-    if os.path.exists(f'{path}/ventricle_Tagged.vtk'):
-        mesh = pv.read(f'{path}/ventricle_Tagged.vtk')
+    if os.path.exists(f'{sim_path}/AP.npy'):
+        AP = np.memmap(f'{sim_path}/AP.npy', dtype=float, mode='r', shape=tuple(ap_params['data']['shape']))
     else:
-        mesh = None
+        print(f"ERROR: simulation file AP.npy could be found at {sim_path}")
 
-
-    if os.path.exists(f'{path}/EG_data.json'):
-        eg_params = read_EG_json(path=path)
-    else:
-        eg_params = None
-
-    if os.path.exists(f'{path}/AP_data.json') and ap_params is None:
-        ap_params = read_AP_json(path=path)
-
-    if os.path.exists(f'{path}/AP.npy'):
-        AP = np.memmap(f'{path}/AP.npy', dtype=float, mode='r', shape=tuple(ap_params['data']['shape']))
-    else:
-        AP = None
-
-    return mesh, AP, ap_params, eg_params
+    return AP, ap_params
 #
 
 def get_global_id(ap_params, t):
