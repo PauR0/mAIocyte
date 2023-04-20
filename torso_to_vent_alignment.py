@@ -277,7 +277,7 @@ class torso_vent_alignment:
             print("ERROR: No path has been provided.....")
             return
 
-        torso_dir = self.vent_path+'/torso_dir'
+        torso_dir = self.vent_path+'/torso'
         if not os.path.exists(torso_dir) or not os.path.isdir(torso_dir):
             os.makedirs(torso_dir)
 
