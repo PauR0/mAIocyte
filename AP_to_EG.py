@@ -142,20 +142,35 @@ def get_global_id(ap_params, t):
     return gid
 #
 
-def build_probes(eg_params, mesh, t_delta=1.0, normalize=False):
+def build_electrodes(eg_params, mesh, torso=None, t_delta=1.0, normalize=False, sort=True):
 
-    probes = {}
+    if not eg_params['data']['electrodes'] and torso is None:
+        print("ERROR: either eg_params must contain a probes directory or a torso\
+              or a torso model containing a 'electrodes' data array must be provided....")
+        return None
 
-    for name, loc in eg_params['data']['probes'].items():
-        p = Probe(name=name, loc=loc)
-        p.compute_distance_vectors(mesh=mesh, normalize=normalize)
+    elecs = {}
 
-        probes[name] = p
-        p.t_ini = eg_params['data']['t_ini']
-        p.t_end = eg_params['data']['t_end']
-        p.t_delta = t_delta
+    if torso is not None:
+        ids = torso['electrodes'] != ''
+        for name, loc in zip(torso['electrodes'][ids], torso.points[ids]):
+            elecs[name] = Electrode(name=name, loc=loc)
+            elecs[name].compute_distance_vectors(mesh=mesh, normalize=normalize)
+            elecs[name].t_ini = eg_params['data']['t_ini']
+            elecs[name].t_end = eg_params['data']['t_end']
+            elecs[name].t_delta = t_delta
+    else:
+        for name, loc in eg_params['data']['electrodes'].items():
+            elecs[name] = Electrode(name=name, loc=loc)
+            elecs[name].compute_distance_vectors(mesh=mesh, normalize=normalize)
+            elecs[name].t_ini = eg_params['data']['t_ini']
+            elecs[name].t_end = eg_params['data']['t_end']
+            elecs[name].t_delta = t_delta
 
-    return probes
+    if sort:
+        return { k:v for k, v in sorted(elecs.items(), key=lambda item: item[1].name)}
+
+    return elecs
 #
 
 def remove_core_from_mesh(mesh):
