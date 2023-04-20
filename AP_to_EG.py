@@ -4,6 +4,8 @@ import os, sys
 
 import argparse
 
+import datetime as dt
+
 import numpy as np
 
 import pyvista as pv
@@ -228,33 +230,117 @@ def save_EG(path, probes, w=False):
 
     save_arrs = {name : probe.EG for name, probe in probes.items()}
     np.savez_compressed(fname, **save_arrs)
+#
+
+def set_up_EG_times(ap_params, eg_params):
+    """
+    Function to set up proper EG times, depending on the existing
+    simulation. It is experessed in ms. The function follows the
+    logic:
+
+    If t_ini  is negative, it is set as last simulation time minus t_ini
+    If t_end is None it is set as the last simulation time.
+    If t_ini > t_end prompts an error and returns none.
+
+    Arguments:
+    ------------
+
+        ap_params : dict
+            The parameters passed to perform the simulation
+
+        last_act_time : float
+            The last activation read from the activation times file.
+
+    Returns:
+    -----------
+
+        ap_params : dict
+            The updated parameter dictionary.
+    """
 
 
-def AP_to_EG(path, mesh, AP, ap_params, eg_params, debug=False, w=False):
+    if eg_params['data']['t_ini'] < 0:
+        eg_params['data']['t_ini'] = ap_params['data']['t_end'] + eg_params['data']['t_ini']
+
+    if eg_params['data']['t_end'] is None:
+        eg_params['data']['t_end'] = ap_params['data']['t_end']
+
+    if eg_params['data']['t_ini'] > eg_params['data']['t_end']:
+        print("ERROR: As set, t_ini is bigger than t_end.....")
+        return None
+
+    return eg_params
+#
+
+
+
+def AP_to_EG(case_path, sim_path, eg_params, mesh=None, torso=None, debug=False, w=False):
+    """
+    The main function to compute the electrogram from a simulation a ventricle model, and a
+    set of electrodes.
+
+    """
+
+    if eg_params is None:
+        eg_params = read_EG_json(path=case_path, abs_path=False)
+
+    if mesh is None and os.path.exists(f'{case_path}/ventricle_Tagged.vtk'):
+        mesh = pv.read(f'{case_path}/ventricle_Tagged.vtk')
+    else:
+        print(f"ERROR: mesh not passed nor available at {case_path}/ventricle_Tagged.vtk")
+        return
+    mesh_filt, ids = remove_core_from_mesh(mesh=mesh)
+
+    if torso is None and os.path.exists(f'{case_path}/torso/torso.vtk'):
+        print(f"Loading detected torso at: {case_path}/torso/torso.vtk")
+        torso = pv.read(f'{case_path}/torso/torso.vtk')
+    elif torso is None:
+        print(f"No torso model has been passed, nor could be found at {case_path}. Electrodes will be built from EG_params. ")
+
+    AP, ap_params = load_sim_path(sim_path=sim_path)
+
+    electrodes = build_electrodes(torso=torso, eg_params=eg_params, mesh=mesh_filt, t_delta=ap_params['data']['t_delta'], normalize=False)
+
+    now = dt.datetime.now()
+    eg_params['metadata']['date'] = now.strftime('%d-%m-%Y')
+    eg_params['metadata']['time'] = now.strftime('%H:%M')
+
+    eg_params = set_up_EG_times(ap_params, eg_params)
+    write_EG_json(sim_path, data=eg_params)
 
     t_ini_ig = get_global_id(ap_params, eg_params['data']['t_ini'])
     t_end_ig = get_global_id(ap_params, eg_params['data']['t_end'])
 
-    mesh_filt, ids = remove_core_from_mesh(mesh=mesh)
-
-    probes = build_probes(eg_params=eg_params, mesh=mesh_filt, t_delta=ap_params['data']['t_delta'], normalize=False)
-
-    for i in trange(t_ini_ig, t_end_ig):
+    for i in trange(t_ini_ig, t_end_ig, desc=f"Computing Electrogram from {eg_params['data']['t_ini']:.2f} to {eg_params['data']['t_end']:.2f}",):
         mesh_filt['AP'] = AP[ids,i]
         mesh_filt = mesh_filt.compute_derivative(scalars='AP', gradient='AP_grad')
-        for _, probe in probes.items():
-            probe.compute_EG(mesh_filt)
+        print(f"------------")
+        for ename, electrode in electrodes.items():
+            electrode.compute_EG(mesh_filt)
+            print(f"{ename} : {electrode.EG[-1]}")
+
 
         if debug:
             p = pv.Plotter()
-            glyph = mesh_filt.glyph(orient='AP_grad', scale=np.ones(mesh_filt.points.shape), geom=pv.Arrow())
+            glyph = mesh_filt.glyph(orient='AP_grad', scale=False, geom=pv.Arrow())
             p.add_mesh(glyph, lighting=False)
             #p.add_mesh(mesh, color="grey", ambient=0.6, opacity=0.5, show_edges=False)
+            if torso is not None:
+                p.add_mesh(torso, color='white', opacity=0.4, show_edges=True)
+            p.add_point_labels(np.array([e.loc for _, e in electrodes.items()]), [e.name for _, e in electrodes.items()])
             p.show()
-            input()
 
-    save_EG(path, probes, w=w)
+    save_EG(sim_path, electrodes, w=w)
 
+    if debug:
+        nr, l = 2, len(electrodes)
+        nc = l//nr + l%nr
+        el = list(electrodes.keys())
+        f, axg = plt.subplots(nrows=nr, ncols=nc)
+        for i in range(nr):
+            for j in range(nc):
+                electrodes[el[i*nc + j*nr]].plot(ax=axg[i][j], show=False)
+        plt.show()
 
 
 if __name__ == '__main__':
@@ -272,24 +358,6 @@ if __name__ == '__main__':
                         nargs='?',
                         help="""Path to an EG_data.json.""")
 
-    #parser.add_argument('-a',
-    #                    '--ap-params',
-    #                    dest='ap_params',
-    #                    action='store',
-    #                    default=None,
-    #                    type=str,
-    #                    nargs='?',
-    #                    help="""Path to an AP_data.json.""")
-
-    parser.add_argument('-s',
-                        '--sim-ap',
-                        dest='AP',
-                        action='store',
-                        default=None,
-                        type=str,
-                        nargs='?',
-                        help="""Path to an AP.npy simulation.""")
-
     parser.add_argument('-m',
                         '--mesh',
                         dest='mesh_fname',
@@ -303,7 +371,8 @@ if __name__ == '__main__':
                         '--debug',
                         dest='debug',
                         action='store_true',
-                        help="""Run in debug mode. Which essentialy is showing some plots...""")
+                        help="""Run in debug mode. Which essentialy is showing
+                        some plots...""")
 
     parser.add_argument('-w',
                         '--overwrite',
@@ -311,33 +380,63 @@ if __name__ == '__main__':
                         action='store_true',
                         help=""" Overwrite existing files.""")
 
+    parser.add_argument('-t',
+                        '--torso-mesh',
+                        dest='torso',
+                        action='store',
+                        default=None,
+                        type=str,
+                        nargs='?',
+                        help="""Path to an already aligned torso model that
+                        contains a data array called electrodes.""")
 
-    parser.add_argument('path',
+
+
+
+    parser.add_argument('case',
                         action='store',
                         type=str,
                         nargs='?',
-                        help="""Path to a directory where required files may be located. Some files can be missed if they have been passed with an optional arg.""")
+                        help="""Path to a case directory. It must contain the
+                        ventricle_Tagged.vtk file and additionally the torso
+                        directory if not passed using -t argument.""")
+
+
+    parser.add_argument('sim_path',
+                        action='store',
+                        default=None,
+                        type=str,
+                        nargs='?',
+                        help="""Path to the directory containing the AP.npy,
+                        and an ap_params.json.""")
 
     args = parser.parse_args()
 
-    if args.path is None:
-        print("ERROR: Wrong path given ....")
+    if args.case is None:
+        print("ERROR: Wrong case path given ....")
         sys.exit()
 
-    mesh, AP, ap_params, eg_params = load_data_from_path(args.path)
+    if args.sim_path is None:
+        print("ERROR: Wrong simulation path given ....")
+        sys.exit()
 
+    mesh=None
     if args.mesh_fname is not None:
         mesh = pv.read(args.mesh_fname)
 
+    torso=None
+    if args.torso is not None:
+        torso = pv.read(args.torso)
 
     if args.eg_params is not None:
-        eg_params = read_EG_json(path=args.case_params, abs_path=True)
+        eg_params = read_EG_json(path=args.eg_params, abs_path=True)
+    else:
+        eg_params = None
 
-
-
-    for (n, x) in zip(['AP', 'mesh', 'ap_params', 'eg_params'], [AP, mesh, ap_params, eg_params]):
-         if x is None:
-            print(f"ERROR: {n} argument is None.....")
-            sys.exit()
-
-    AP_to_EG(args.path, mesh, AP, ap_params=ap_params, eg_params=eg_params, debug=args.debug, w=args.w)
+    AP_to_EG(case_path = args.case,
+             sim_path  = args.sim_path,
+             eg_params = eg_params,
+             mesh      = mesh,
+             torso     = torso,
+             debug     = args.debug,
+             w         = args.w)
