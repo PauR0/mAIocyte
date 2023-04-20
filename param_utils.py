@@ -66,9 +66,9 @@ default_EG_params = {
         'time' : None
     },
     'data' : {
-        't_ini'  : None,
+        't_ini'  : -1000,
         't_end'  : None,
-        'probes' : {}
+        'electrodes' : {}
     }
 }
 
