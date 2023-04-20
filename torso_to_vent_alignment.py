@@ -302,6 +302,8 @@ class torso_vent_alignment:
 
         if self.torso is not None:
             p.add_mesh(self.torso, opacity=0.4, color='w', show_edges=True)
+            mask = self.torso['electrodes'] != ''
+            p.add_point_labels(self.torso.points[mask], self.torso['electrodes'][mask])
         if self.target_vent is not None and show_target_vent:
             p.add_mesh(self.target_vent, opacity=0.8, color='g')
         if self.target_landmarks is not None and show_target_vent:
