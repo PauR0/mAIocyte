@@ -165,11 +165,10 @@ def build_electrodes(eg_params, mesh, torso=None, t_delta=1.0, normalize=False, 
 def remove_core_from_mesh(mesh):
 
     ids = mesh['Cell_type'] < 2
+    mesh['g_id'] = np.arange(0,mesh.points.shape[0], step=1)
     mesh_filt = mesh.extract_points(ids, adjacent_cells=False)
 
-    ids = find_point_ids(arr1=mesh.points, arr2=mesh_filt.points)
-
-    return mesh_filt, ids
+    return mesh_filt, mesh['g_id'].copy()
 #
 
 def find_point_ids(arr1, arr2):
@@ -289,7 +288,7 @@ def AP_to_EG(case_path, sim_path, eg_params, mesh=None, torso=None, debug=False,
     else:
         print(f"ERROR: mesh not passed nor available at {case_path}/ventricle_Tagged.vtk")
         return
-    mesh_filt, ids = remove_core_from_mesh(mesh=mesh)
+    mesh_filt, _ = remove_core_from_mesh(mesh=mesh)
 
     if torso is None and os.path.exists(f'{case_path}/torso/torso.vtk'):
         print(f"Loading detected torso at: {case_path}/torso/torso.vtk")
@@ -312,7 +311,7 @@ def AP_to_EG(case_path, sim_path, eg_params, mesh=None, torso=None, debug=False,
     t_end_ig = get_global_id(ap_params, eg_params['data']['t_end'])
 
     for i in trange(t_ini_ig, t_end_ig, desc=f"Computing Electrogram from {eg_params['data']['t_ini']:.2f} to {eg_params['data']['t_end']:.2f}",):
-        mesh_filt['AP'] = AP[ids,i]
+        mesh_filt['AP'] = AP[mesh_filt['g_id'], i]
         mesh_filt = mesh_filt.compute_derivative(scalars='AP', gradient='AP_grad')
         print(f"------------")
         for ename, electrode in electrodes.items():
