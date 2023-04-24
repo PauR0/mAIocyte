@@ -53,7 +53,6 @@ default_AP_params = {
         't_delta'   : 1.0,
         't_extra'   : 500.0,
         'shape'     : None,
-        "save_freq" : 1000,
         "n_proc"    : 4
     }
 }
