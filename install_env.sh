@@ -22,18 +22,21 @@ build_venv () {
 
 set_act_alias() {
 
-    if alias "act_$1" > /dev/null 2>&1
+    NAME=$(basename $1)
+
+    if alias "act_$NAME" > /dev/null 2>&1
         then
             echo "Alias act_$1 already exists. The activate alias should be set manually."
         else
+            OUT_STR="\n#Alias to activae StemCells venv \nalias act_$NAME='source $SCRIPTPATH/$1/bin/activate'\n\n"
             case $SHELL in
 
                 "/bin/zsh")
-                    echo "\n alias act_$1='source $SCRIPTPATH/$1/bin/activate'" >> "$HOME/.zshrc"
+                    echo -e $OUT_STR >> "$HOME/.zshrc"
                     ;;
 
                 "/bin/bash")
-                    echo "\n alias act_$1='source $SCRIPTPATH/$1/bin/activate'" >> "$HOME/.bashrc"
+                    echo -e $OUT_STR >> "$HOME/.bashrc"
                     ;;
 
                 *)
