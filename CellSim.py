@@ -133,6 +133,18 @@ class CellSim:
         self.__curve_ds  : pd.DataFrame = None
     #
 
+    def  __str__(self):
+        return f"CellSim    id: {self.id}\n"              +\
+               f"\t-cell_type : {self.cell_type}\n"        +\
+               f"\t-CL0       : {self.CL0}\n"              +\
+               f"\t-Time Params\n"                         +\
+               f"\t\t-t_ini : {self.t_ini}\n"              +\
+               f"\t\t-t_end : {self.t_end}\n"              +\
+               f"\t\t-dt    : {self.dt}\n"                 +\
+               f"\t-act. times : {self.act_times}\n" +\
+               f"\t-AP         : {self.ap}\n"
+    #
+
     def restart(self, reload_pickles=True):
 
         if reload_pickles:
