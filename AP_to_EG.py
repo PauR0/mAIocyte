@@ -271,6 +271,21 @@ def set_up_EG_times(ap_params, eg_params):
     return eg_params
 #
 
+def plot_EG(electrodes, nr=2, fname=None, show=False):
+
+    l = len(electrodes)
+    nc = l//nr + l%nr
+    el = list(electrodes.keys())
+    f, axg = plt.subplots(nrows=nr, ncols=nc)
+    for i in range(nr):
+        for j in range(nc):
+            electrodes[el[i + j*nr]].plot(ax=axg[i][j], show=False)
+
+    if fname is not None:
+        f.savefig(fname=fname)
+
+    if show:
+        plt.show()
 
 
 def AP_to_EG(case_path, sim_path, eg_params, mesh=None, torso=None, debug=False, w=False):
@@ -330,16 +345,8 @@ def AP_to_EG(case_path, sim_path, eg_params, mesh=None, torso=None, debug=False,
             p.show()
 
     save_EG(sim_path, electrodes, w=w)
+    plot_EG(electrodes=electrodes, fname=f"{sim_path}/EG.eps", show=debug)
 
-    if debug:
-        nr, l = 2, len(electrodes)
-        nc = l//nr + l%nr
-        el = list(electrodes.keys())
-        f, axg = plt.subplots(nrows=nr, ncols=nc)
-        for i in range(nr):
-            for j in range(nc):
-                electrodes[el[i*nc + j*nr]].plot(ax=axg[i][j], show=False)
-        plt.show()
 
 
 if __name__ == '__main__':
