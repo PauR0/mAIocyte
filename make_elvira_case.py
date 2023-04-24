@@ -28,7 +28,7 @@ if not FILE_DIR:
 TEMP_PATH = FILE_DIR+"/case"
 if 'SC_TEMP_CASE' in os.environ:
     print("[make_elvira_case] Using template case in "+os.environ['SC_TEMP_CASE'])
-    TEMP_PATH = os.environ['CENTERLINE_TEMPLATE_CASE']
+    TEMP_PATH = os.environ['SC_TEMP_CASE']
 elif not (sys.prefix == sys.base_prefix): #Determine if running inside a venv
         venv_temp_case_path = f"{sys.prefix}/share/template_case"
         if os.path.exists(venv_temp_case_path) and os.path.isdir(venv_temp_case_path):
