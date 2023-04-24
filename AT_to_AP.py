@@ -144,20 +144,50 @@ def get_chunk_size(size, n_proc):
 
 def run_sim(args):
 
-    n, chunk_size, cell_sims, times, act_times, at_ids, AP = args
+    n, chunk_size, cell_sims, times, act_times, at_ids, sim_dir = args
 
-    ini, end = n*chunk_size, min(len(cell_sims)-1, (n+1)*chunk_size)
+    ini, end = n*chunk_size, min(len(cell_sims), (n+1)*chunk_size)
+    AP = np.full(shape=(end - ini, times.shape[0]), fill_value=-1e6, dtype='float64')
 
-    text = f"Process #{n}: "
+    text = f"Process #{n} from {ini} to {end}"
     for nid, cs in enumerate(tqdm(cell_sims[ini:end], desc=text, position=n, leave=False)):
         if cs is not None:
             cs.times = times
             cs.act_times = act_times[ini+nid, at_ids[ini+nid]]
             cs.run_simulation()
-            AP[ini+nid,:] = cs.ap
-    AP.flush()
-    print(f"Process #{n}: Finished!")
+            AP[nid,:] = cs.ap
+    np.save(f'{sim_dir}/process_{n}.npy', AP)
+    print(f"Process #{n} from {ini} to {end} Finished!")
 #
+
+def assemble_parallel_sims(sim_dir, shape, rm_proc=True):
+
+    print("---------------------")
+    print(f"Assembling simulation: total shape {shape}")
+    AP = np.memmap(f"{sim_dir}/AP.npy", dtype='float64', mode='w+', shape=shape)
+    parts = sorted([f for f in os.listdir(sim_dir) if "process" in f and f.endswith('.npy')], key = lambda x: int(x.replace("process_","").replace(".npy", "")))
+
+    print("---------------------")
+    total_cells_nan = 0
+    ini, end = 0, -1
+    pb = tqdm(parts)
+    for i, part in enumerate(pb):
+        part_ap = np.load(f"{sim_dir}/{part}")
+        ids_nan = np.isnan(part_ap)
+        end = ini + part_ap.shape[0]
+        pb.set_description(f"-Part {i} : {part} from {ini} to {end}")
+        if ids_nan.any():
+            n_cells_nan = np.unique(np.argwhere(ids_nan)[:,0])
+            print(f"WARNING: {ids_nan.sum()} NaNs have been detected at cells: {n_cells_nan}")
+            total_cells_nan += n_cells_nan
+        AP[ini:end] = part_ap
+        AP.flush()
+        ini = end
+    print("---------------------")
+    if total_cells_nan:
+        print(f"Warning: {total_cells_nan} cells contined nans.")
+    if rm_proc:
+        [os.remove(f"{sim_dir}/{part}") for par in parts]
 
 
 def AT_to_AP(case_dir,
@@ -187,7 +217,6 @@ def AT_to_AP(case_dir,
     N = int((t_end-t_ini)/t_delta)
     times = np.linspace(t_ini, t_end, N)
 
-    save_freq = ap_params['data']['save_freq']
     now = dt.datetime.now()
     ap_params['metadata']['date'] = now.strftime('%d-%m-%Y')
     ap_params['metadata']['time'] = now.strftime('%H:%M')
@@ -203,17 +232,19 @@ def AT_to_AP(case_dir,
 
     write_AP_json(sim_dir, data=ap_params)
     np.save(f"{sim_dir}/act_times.npy", act_times)
-    AP = np.memmap(f"{sim_dir}/AP.npy", dtype='float64', mode='w+', shape=(len(cell_types), times.shape[0]))
     chunk_size = get_chunk_size(len(cell_sims), ap_params['data']['n_proc'])
+
 
     procs = []
     for i in range(ap_params['data']['n_proc']):
-        p = Process(target=run_sim, args=((i, chunk_size, cell_sims, times, act_times, at_ids, AP),))
+        p = Process(target=run_sim, args=((i, chunk_size, cell_sims, times, act_times, at_ids, sim_dir),))
         procs.append(p)
         p.start()
 
     for p in procs:
         p.join()
+
+    assemble_parallel_sims(sim_dir=sim_dir, shape=(len(cell_types), times.shape[0]), rm_proc=False)
 #
 
 if __name__ == '__main__':
