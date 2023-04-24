@@ -98,6 +98,11 @@ def make_sim_dir(case_dir, act_times_file=None, sim_id=None, f=False):
     if os.path.exists(sim_dir) and not f:
         print(f"ERROR: Directory {sim_dir} already exists. To overwrite it try with -f option.")
         return None, None
+    elif os.path.exists(sim_dir) and f:
+        for f in os.listdir(sim_dir):
+            if "process" in f and f.endswith('.npy'):
+                os.remove(f"{sim_dir}/{f}")
+        return sim_dir, sim_id
     else:
         os.makedirs(sim_dir, exist_ok=True)
         return sim_dir, sim_id
