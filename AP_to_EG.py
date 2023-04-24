@@ -328,13 +328,15 @@ def AP_to_EG(case_path, sim_path, eg_params, mesh=None, torso=None, debug=False,
     for i in trange(t_ini_ig, t_end_ig, desc=f"Computing Electrogram from {eg_params['data']['t_ini']:.2f} to {eg_params['data']['t_end']:.2f}",):
         mesh_filt['AP'] = AP[mesh_filt['g_id'], i]
         mesh_filt = mesh_filt.compute_derivative(scalars='AP', gradient='AP_grad')
-        print(f"------------")
+        if debug > 1:
+            print(f"------------")
         for ename, electrode in electrodes.items():
             electrode.compute_EG(mesh_filt)
-            print(f"{ename} : {electrode.EG[-1]}")
+            if debug > 1:
+                print(f"{ename} : {electrode.EG[-1]}")
 
 
-        if debug:
+        if debug > 1:
             p = pv.Plotter()
             glyph = mesh_filt.glyph(orient='AP_grad', scale=False, geom=pv.Arrow())
             p.add_mesh(glyph, lighting=False)
@@ -376,9 +378,12 @@ if __name__ == '__main__':
     parser.add_argument('-d',
                         '--debug',
                         dest='debug',
-                        action='store_true',
+                        nargs='?',
+                        type=int,
+                        default=0,
+                        const=1,
                         help="""Run in debug mode. Which essentialy is showing
-                        some plots...""")
+                        some plots. A allowing to select debug level from 0 to 2 inc. """)
 
     parser.add_argument('-w',
                         '--overwrite',
