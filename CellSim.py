@@ -94,11 +94,11 @@ def build_multiple_cells(cell_types, types_set=None):
             cell_models[ct]['state_to_curve'] = LUTActPotCurve(curves_DS=curves_DS, curves_fvs=Y, t_delta=t_delta)
 
     cells = []
-    for c in tqdm(cell_types, desc='Building cells.'):
+    for i, c in enumerate(tqdm(cell_types, desc='Building cells.')):
         if c == 'core':
             cells.append(None)
         else:
-            cellsim = CellSim(cell_type=c)
+            cellsim = CellSim(i=i, cell_type=c)
             cellsim.cell = Cell(state_reg=cell_models[c]["state_regresor"], act_pot_curve=cell_models[c]["state_to_curve"])
             _, s0 = get_initial_state(cell_models[c]['curve_fvs'], S1=cellsim.CL0)
             cellsim.cell.set_state(s0)
@@ -109,9 +109,9 @@ def build_multiple_cells(cell_types, types_set=None):
 
 class CellSim:
 
-    def __init__(self, cell_type=None, CL0=600):
+    def __init__(self, i=None, cell_type=None, CL0=600):
 
-        self.id = None
+        self.id = i
         self.debug = False
 
         self.cell      : Cell   = None
