@@ -175,6 +175,14 @@ class CellSim:
         self.cell.set_state(s0)
     #
 
+    def set_time_array(self, t):
+
+        self.times=t
+        self.t_ini = t[0]
+        self.t_end = t[-1]
+        self.t_ini = t[1] - t[0]
+    #
+
     def load_act_times(self, fname, update_t_end=True):
         self.act_times = np.sort(np.load(fname))
 
