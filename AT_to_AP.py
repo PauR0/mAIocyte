@@ -198,13 +198,16 @@ def AT_to_AP(case_dir,
     act_times = load_act_times(act_times_file=act_times_file)
     at_ids = ~ np.isnan(act_times)
 
+    print("-"*20)
     print(f"ACT_TIMES:  shape {act_times.shape}; max {act_times[at_ids].max()}; min {act_times[at_ids].min()}; nans {(~at_ids).sum()}")
-
+    print("-"*20)
     cell_types = load_cell_types_from_mesh(case_dir)
+
     types_set = np.unique(cell_types)
     print(f"Cell types description:")
     for ct in types_set:
         print(f"\t- Type {ct}: n {(cell_types == ct).sum()}")
+    print("-"*20)
     cell_sims = build_multiple_cells(cell_types, types_set=types_set)
 
     ap_params = set_up_sim_times(ap_params, last_act_time=act_times[at_ids].max())
