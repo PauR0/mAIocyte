@@ -192,6 +192,8 @@ def AT_to_AP(case_dir,
              act_times_file,
              f=False):
 
+    sim_dir, sim_id = make_sim_dir(case_dir=case_dir, act_times_file=act_times_file, sim_id=ap_params['data']['sim_id'], f=f)
+
     act_times = load_act_times(act_times_file=act_times_file)
     at_ids = ~ np.isnan(act_times)
 
@@ -222,7 +224,6 @@ def AT_to_AP(case_dir,
     ap_params['metadata']['time'] = now.strftime('%H:%M')
     ap_params['data']['shape'] = (len(cell_types), times.shape[0])
 
-    sim_dir, sim_id = make_sim_dir(case_dir=case_dir, act_times_file=act_times_file, sim_id=ap_params['data']['sim_id'], f=f)
 
     if sim_dir is None:
         return
