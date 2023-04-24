@@ -173,24 +173,16 @@ def assemble_parallel_sims(sim_dir, shape, rm_proc=True):
     parts = sorted([f for f in os.listdir(sim_dir) if "process" in f and f.endswith('.npy')], key = lambda x: int(x.replace("process_","").replace(".npy", "")))
 
     print("---------------------")
-    total_cells_nan = 0
     ini, end = 0, -1
-    pb = tqdm(parts)
+    pb = tqdm(parts, leave=False)
     for i, part in enumerate(pb):
         part_ap = np.load(f"{sim_dir}/{part}")
-        ids_nan = np.isnan(part_ap)
         end = ini + part_ap.shape[0]
         pb.set_description(f"-Part {i} : {part} from {ini} to {end}")
-        if ids_nan.any():
-            n_cells_nan = np.unique(np.argwhere(ids_nan)[:,0])
-            print(f"WARNING: {ids_nan.sum()} NaNs have been detected at cells: {n_cells_nan}")
-            total_cells_nan += n_cells_nan
         AP[ini:end] = part_ap
         AP.flush()
         ini = end
     print("---------------------")
-    if total_cells_nan:
-        print(f"Warning: {total_cells_nan} cells contined nans.")
     if rm_proc:
         [os.remove(f"{sim_dir}/{part}") for par in parts]
 
