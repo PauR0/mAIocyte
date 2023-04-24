@@ -152,7 +152,7 @@ def run_sim(args):
     text = f"Process #{n} from {ini} to {end}"
     for nid, cs in enumerate(tqdm(cell_sims[ini:end], desc=text, position=n, leave=False)):
         if cs is not None:
-            cs.times = times
+            cs.set_time_array(times)
             cs.act_times = act_times[ini+nid, at_ids[ini+nid]]
             cs.run_simulation()
             AP[nid,:] = cs.ap
